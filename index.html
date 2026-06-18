@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ejercicios Bootcamp · JavaScript &amp; DOM</title>
+<meta name="description" content="Coleccion interactiva de ejercicios de JavaScript y manipulacion del DOM.">
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; color:var(--text);
+    font-family:-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg);
+    display:flex; flex-direction:column;
+  }
+  .wrap{ width:100%; max-width:880px; margin:0 auto; padding:0 22px; }
+
+  header{ padding:48px 0 8px; }
+  header .logo{
+    height:56px; width:auto; display:block; margin-bottom:22px;
+    /* halo claro para que el texto oscuro del logo se lea sobre fondo oscuro */
+    filter: drop-shadow(0 0 1px rgba(255,255,255,.9)) drop-shadow(0 0 6px rgba(255,255,255,.25));
+  }
+  header .badge{ font-size:.78rem; letter-spacing:2px; text-transform:uppercase; color:var(--accent); }
+  header h1{ font-size:2.1rem; margin:10px 0 8px; }
+  header p{ color:var(--muted); font-size:1.05rem; margin:0; max-width:560px; line-height:1.55; }
+
+  .list{ display:grid; gap:14px; padding:34px 0 20px; }
+  .card{
+    display:flex; align-items:center; gap:18px;
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:20px 22px; text-decoration:none; color:inherit;
+    transition:border-color .15s ease, transform .15s ease, background .15s ease;
+  }
+  .card:hover{ border-color:var(--accent); transform:translateX(4px); background:#1a202b; }
+  .card .icon{
+    flex:none; width:40px; height:40px; object-fit:contain;   /* nave sin fondo */
+  }
+  .card .info{ flex:1; min-width:0; }
+  .card h2{ font-size:1.12rem; margin:0 0 3px; }
+  .card p{ color:var(--muted); font-size:.92rem; margin:0; line-height:1.45; }
+  .card .tag{ flex:none; font-size:.74rem; color:var(--muted); border:1px solid var(--border); border-radius:20px; padding:3px 11px; }
+  .card .arrow{ flex:none; color:var(--muted); font-size:1.3rem; transition:transform .15s ease, color .15s ease; }
+  .card:hover .arrow{ transform:translateX(4px); color:var(--accent); }
+
+  footer{ margin-top:auto; padding:30px 0 26px; color:var(--muted); font-size:.85rem; border-top:1px solid var(--border); }
+  footer a{ color:var(--accent); text-decoration:none; }
+  footer a:hover{ text-decoration:underline; }
+
+  @media (max-width:560px){
+    .card .tag{ display:none; }
+    header h1{ font-size:1.7rem; }
+    header .logo{ height:44px; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <header>
+      <img class="logo" src="img/logo.png" alt="btsoft — Transformando ideas en codigo">
+      <span class="badge">Ejercicios Bootcamp</span>
+      <h1>Demos interactivas</h1>
+      <p>Coleccion de ejercicios de JavaScript y manipulacion del DOM. Elige una demo para empezar.</p>
+    </header>
+
+    <!-- Las tarjetas se generan solas desde la lista de abajo. -->
+    <main class="list" id="list"></main>
+
+    <footer>
+      Hecho para el Bootcamp &middot;
+      Publicado con <a href="https://pages.github.com/" target="_blank" rel="noopener">GitHub Pages</a>
+    </footer>
+
+  </div>
+
+<script>
+  /* =========================================================
+   *  PARA AGREGAR UNA PAGINA NUEVA:
+   *  copia una linea y cambia los datos. Nada mas.
+   *    file  -> nombre exacto del archivo .html (respeta mayusculas)
+   *    title -> titulo que se muestra
+   *    desc  -> descripcion corta
+   *    tag   -> etiqueta de categoria (opcional)
+   *    icon  -> ruta del icono (opcional; por defecto img/nave.png)
+   * ========================================================= */
+  const ICONO_POR_DEFECTO = "img/nave.png";
+
+  const paginas = [
+    {
+      file:  "explorador_dom_v3.html",
+      title: "Explorador del DOM",
+      desc:  "Recorre el arbol del DOM de forma visual: nodos, elementos y atributos.",
+      tag:   "DOM"
+    },
+    {
+      file:  "letvardiferencias.html",
+      title: "var vs let — Scope",
+      desc:  "Los 4 problemas de var (hoisting, scope, loops async, re-declaracion) y como let los resuelve.",
+      tag:   "JavaScript"
+    },
+    // { file: "nueva-pagina.html", title: "Titulo", desc: "Descripcion corta.", tag: "Categoria" },
+  ];
+
+  /* ---- Renderizado automatico (no hace falta tocar esto) ---- */
+  const lista = document.getElementById("list");
+  paginas.forEach(p => {
+    const card = document.createElement("a");
+    card.className = "card";
+    card.href = p.file;
+    card.innerHTML =
+      '<img class="icon" alt="">' +
+      '<span class="info"><h2></h2><p></p></span>' +
+      (p.tag ? '<span class="tag"></span>' : '') +
+      '<span class="arrow">&rsaquo;</span>';
+    card.querySelector(".icon").src = p.icon || ICONO_POR_DEFECTO;
+    card.querySelector("h2").textContent = p.title;
+    card.querySelector("p").textContent = p.desc;
+    if (p.tag) card.querySelector(".tag").textContent = p.tag;
+    lista.appendChild(card);
+  });
+</script>
+</body>
+</html>
