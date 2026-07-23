@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagramas de Conjuntos - Presentación SQL</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            padding: 8px;
+            overflow: hidden;
+        }
+
+        .container {
+            max-width: 1900px;
+            height: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            position: relative;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .header .logo {
+            position: absolute;
+            top: 12px;
+            left: 20px;
+            height: 34px;
+            width: auto;
+            filter: drop-shadow(0 0 1px rgba(255,255,255,.9)) drop-shadow(0 0 6px rgba(255,255,255,.25));
+        }
+
+        .header h1 {
+            font-size: 1.5em;
+            margin-bottom: 2px;
+        }
+
+        .header h1 .nave {
+            height: 1.1em;
+            width: auto;
+            vertical-align: -0.15em;
+            margin-right: 6px;
+        }
+
+        .header p {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .exercise-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 8px;
+        }
+
+        .exercise-btn {
+            padding: 7px 24px;
+            border: 2px solid white;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.95em;
+            transition: all 0.3s;
+        }
+        
+        .exercise-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .exercise-btn.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        .exercise-content {
+            display: none;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .exercise-content.active {
+            display: block;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 480px 1fr;
+            gap: 0;
+            height: 100%;
+        }
+
+        .query-panel {
+            background: #f8f9fa;
+            padding: 16px 18px;
+            border-right: 3px solid #e9ecef;
+            overflow-y: auto;
+        }
+
+        .query-panel h2 {
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 1.15em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 6px;
+        }
+
+        .enunciado {
+            background: white;
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 2px solid #e9ecef;
+            line-height: 1.45;
+            font-size: 0.9em;
+            color: #495057;
+        }
+
+        .enunciado h3 {
+            color: #667eea;
+            margin-bottom: 6px;
+            font-size: 1.02em;
+        }
+
+        .sql-query {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 14px 16px;
+            border-radius: 10px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.82em;
+            overflow-x: auto;
+            line-height: 1.45;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 12px;
+            white-space: pre-wrap;
+        }
+        
+        .sql-keyword { color: #c678dd; font-weight: bold; }
+        .sql-table { color: #61afef; }
+        .sql-comment { color: #5c6370; font-style: italic; }
+        .sql-string { color: #98c379; }
+        .sql-number { color: #d19a66; }
+        
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #0066cc;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 0.85em;
+        }
+
+        .info-box strong {
+            color: #0066cc;
+        }
+
+        .legend-mini {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .legend-mini-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px;
+            background: white;
+            border-radius: 6px;
+            border: 2px solid #e9ecef;
+            font-size: 0.82em;
+        }
+
+        .legend-mini-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid;
+            flex-shrink: 0;
+        }
+
+        .diagram-panel {
+            padding: 16px 18px;
+            overflow-y: auto;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .step-btn {
+            padding: 7px 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.82em;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .step-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        
+        .step-btn.active {
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .step-0 { background: #e9ecef; color: #495057; }
+        .step-0.active { background: #495057; color: white; }
+        
+        .step-1 { background: #d4edda; color: #155724; }
+        .step-1.active { background: #28a745; color: white; }
+        
+        .step-2 { background: #d1ecf1; color: #0c5460; }
+        .step-2.active { background: #17a2b8; color: white; }
+        
+        .step-3 { background: #fff3cd; color: #856404; }
+        .step-3.active { background: #ffc107; color: #333; }
+        
+        .step-4 { background: #f8d7da; color: #721c24; }
+        .step-4.active { background: #dc3545; color: white; }
+        
+        .step-5 { background: #e7d4f7; color: #6f42c1; }
+        .step-5.active { background: #6f42c1; color: white; }
+        
+        .svg-container {
+            background: white;
+            border-radius: 12px;
+            padding: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .svg-container svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-height: 42vh;
+        }
+
+        .step-explanation {
+            background: #f8f9fa;
+            padding: 12px 14px;
+            border-radius: 10px;
+            margin-top: 12px;
+            border: 2px solid #e9ecef;
+            font-size: 0.9em;
+        }
+
+        .step-explanation h3 {
+            font-size: 1.02em;
+            margin-bottom: 4px;
+        }
+        
+        .step-info {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .step-info.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .formula {
+            background: white;
+            padding: 8px 10px;
+            border-left: 4px solid #667eea;
+            margin: 6px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.82em;
+            border-radius: 5px;
+            color: #495057;
+            overflow-x: auto;
+        }
+
+        ul {
+            margin: 6px 0;
+            padding-left: 22px;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 1000px) {
+            body {
+                height: auto;
+                overflow: auto;
+            }
+            .container {
+                height: auto;
+            }
+            .content {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            .query-panel, .diagram-panel {
+                overflow-y: visible;
+            }
+            .svg-container svg {
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img class="logo" src="img/logo.png" alt="btsoft — Transformando ideas en codigo">
+            <h1><img class="nave" src="img/nave.png" alt="">Diagramas de Conjuntos SQL</h1>
+            <p>Visualización interactiva de consultas con operaciones de conjuntos</p>
+            <div class="exercise-selector">
+                <button class="exercise-btn active" onclick="switchExercise(1)">📊 Ejercicio 1: Empleados</button>
+                <button class="exercise-btn" onclick="switchExercise(2)">👥 Ejercicio 2: Usuarios</button>
+            </div>
+        </div>
+        
+        <!-- EJERCICIO 1: EMPLEADOS -->
+        <div id="exercise1" class="exercise-content active">
+            <div class="content">
+                <div class="query-panel">
+                    <h2>📋 Enunciado y Query</h2>
+                    
+                    <div class="enunciado">
+                        <h3>🎯 Objetivo</h3>
+                        <p>Encontrar empleados que cumplan con múltiples criterios simultáneamente utilizando operaciones de conjuntos.</p>
+                        
+                        <h3 style="margin-top: 8px;">📝 Descripción</h3>
+                        <p>Necesitamos obtener información de empleados que:</p>
+                        <ul>
+                            <li>Tienen asignado un departamento</li>
+                            <li>Han tenido el rol "Technical Lead" en algún proyecto</li>
+                            <li>Ganan más que el promedio global de salarios</li>
+                            <li>Nunca han sido "Project Manager"</li>
+                        </ul>
+                    </div>
+                    
+                    <h2 style="margin-top: 12px;">💻 Query SQL</h2>
+                    <div class="sql-query">
+<span class="sql-keyword">SELECT</span> e.id, e.first_name, e.last_name, e.salary
+<span class="sql-keyword">FROM</span> <span class="sql-table">employees</span> e
+<span class="sql-keyword">WHERE</span>
+  <span class="sql-comment">/* A: pertenece al conjunto "tiene departamento" */</span>
+  e.department_id <span class="sql-keyword">IS NOT NULL</span>
+
+  <span class="sql-comment">/* B: pertenece al conjunto "tiene rol Technical Lead" */</span>
+  <span class="sql-keyword">AND EXISTS</span> (
+    <span class="sql-keyword">SELECT</span> <span class="sql-number">1</span>
+    <span class="sql-keyword">FROM</span> <span class="sql-table">employee_project</span> ep
+    <span class="sql-keyword">WHERE</span> ep.employee_id = e.id
+      <span class="sql-keyword">AND</span> ep.role = <span class="sql-string">'Technical Lead'</span>
+  )
+
+  <span class="sql-comment">/* C: pertenece al conjunto "salario > promedio global" */</span>
+  <span class="sql-keyword">AND</span> e.salary > (
+    <span class="sql-keyword">SELECT AVG</span>(e2.salary)
+    <span class="sql-keyword">FROM</span> <span class="sql-table">employees</span> e2
+  )
+
+  <span class="sql-comment">/* D: excluir conjunto "es Project Manager" */</span>
+  <span class="sql-keyword">AND NOT EXISTS</span> (
+    <span class="sql-keyword">SELECT</span> <span class="sql-number">1</span>
+    <span class="sql-keyword">FROM</span> <span class="sql-table">employee_project</span> ep2
+    <span class="sql-keyword">WHERE</span> ep2.employee_id = e.id
+      <span class="sql-keyword">AND</span> ep2.role = <span class="sql-string">'Project Manager'</span>
+  );</div>
+                    
+                    <div class="info-box">
+                        <strong>💡 Fórmula de Conjuntos:</strong><br>
+                        Resultado = (A ∩ B ∩ C) - D
+                    </div>
+                    
+                    <h3 style="margin-top: 12px; color: #667eea; font-size: 1em;">🏷️ Leyenda</h3>
+                    <div class="legend-mini">
+                        <div class="legend-mini-item">
+                            <div class="legend-mini-color" style="background: rgba(40, 167, 69, 0.3); border-color: #28a745;"></div>
+                            <strong>A:</strong> Departamento
+                        </div>
+                        <div class="legend-mini-item">
+                            <div class="legend-mini-color" style="background: rgba(23, 162, 184, 0.3); border-color: #17a2b8;"></div>
+                            <strong>B:</strong> Technical Lead
+                        </div>
+                        <div class="legend-mini-item">
+                            <div class="legend-mini-color" style="background: rgba(255, 193, 7, 0.3); border-color: #ffc107;"></div>
+                            <strong>C:</strong> Salario > Prom
+                        </div>
+                        <div class="legend-mini-item">
+                            <div class="legend-mini-color" style="background: rgba(220, 53, 69, 0.3); border-color: #dc3545;"></div>
+                            <strong>D:</strong> Project Manager (excluir)
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="diagram-panel">
+                    <h2 style="color: #495057; margin-bottom: 10px; font-size: 1.15em; border-bottom: 2px solid #667eea; padding-bottom: 6px;">
+                        📊 Diagrama Interactivo
+                    </h2>
+                    <div class="controls">
+                        <button class="step-btn step-0 active" onclick="showStep(1, 0)">Todos</button>
+                        <button class="step-btn step-1" onclick="showStep(1, 1)">+ Dept (A)</button>
+                        <button class="step-btn step-2" onclick="showStep(1, 2)">+ Technical Lead (B)</button>
+                        <button class="step-btn step-3" onclick="showStep(1, 3)">+ Salario>Prom (C)</button>
+                        <button class="step-btn step-4" onclick="showStep(1, 4)">- Project Manager (D)</button>
+                        <button class="step-btn step-5" onclick="showStep(1, 5)">✓ Resultado</button>
+                    </div>
+                    <div class="svg-container">
+                        <svg id="vennDiagram1" width="100%" height="550" viewBox="0 0 800 550"></svg>
+                    </div>
+                    
+                    <div class="step-explanation">
+                        <div id="step1-0" class="step-info active">
+                            <h3>📊 Todos los Empleados</h3>
+                            <p>Conjunto inicial de la tabla employees.</p>
+                        </div>
+                        <div id="step1-1" class="step-info">
+                            <h3>✅ Paso 1: Conjunto A (Departamento)</h3>
+                            <p>Empleados que tienen asignado un departamento.</p>
+                            <div class="formula">WHERE e.department_id IS NOT NULL</div>
+                        </div>
+                        <div id="step1-2" class="step-info">
+                            <h3>✅ Paso 2: A ∩ B (Technical Lead)</h3>
+                            <p>Intersección con empleados que tienen el rol "Technical Lead" en algún proyecto.</p>
+                            <div class="formula">AND EXISTS (SELECT 1 FROM employee_project WHERE role = 'Technical Lead')</div>
+                        </div>
+                        <div id="step1-3" class="step-info">
+                            <h3>✅ Paso 3: A ∩ B ∩ C (Salario Alto)</h3>
+                            <p>Intersección con empleados con salario superior al promedio global.</p>
+                            <div class="formula">AND e.salary > (SELECT AVG(salary) FROM employees)</div>
+                        </div>
+                        <div id="step1-4" class="step-info">
+                            <h3>❌ Paso 4: (A ∩ B ∩ C) - D (Excluir Project Managers)</h3>
+                            <p>Excluir empleados que son o fueron "Project Manager".</p>
+                            <div class="formula">AND NOT EXISTS (SELECT 1 FROM employee_project WHERE role = 'Project Manager')</div>
+                        </div>
+                        <div id="step1-5" class="step-info">
+                            <h3>🎯 Resultado Final</h3>
+                            <p><strong>Technical Leads de alto salario sin experiencia como Project Manager</strong></p>
+                            <ul>
+                                <li>✓ Tienen departamento asignado</li>
+                                <li>✓ Son Technical Lead en algún proyecto</li>
+                                <li>✓ Salario > promedio global</li>
+                                <li>✗ NO son Project Manager</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- EJERCICIO 2: USUARIOS -->
+        <div id="exercise2" class="exercise-content">
+            <div class="content">
+                <div class="query-panel">
+                    <h2>📋 Enunciado y Query</h2>
+                    
+                    <div class="enunciado">
+                        <h3>🎯 Objetivo</h3>
+                        <p>Identificar empleados operativos que participan en proyectos, sin ser Project Manager ni pertenecer a departamentos administrativos.</p>
+
+                        <h3 style="margin-top: 8px;">📝 Descripción</h3>
+                        <p>Necesitamos obtener empleados que:</p>
+                        <ul>
+                            <li>Participan en al menos un proyecto</li>
+                            <li>NO son "Project Manager" en ningún proyecto</li>
+                            <li>NO pertenecen a departamentos administrativos (1, 2, 9)</li>
+                        </ul>
+                    </div>
+                    
+                    <h2 style="margin-top: 12px;">💻 Query SQL</h2>
+                    <div class="sql-query">
+<span class="sql-keyword">SELECT</span> *
+<span class="sql-keyword">FROM</span> <span class="sql-table">employees</span> e
+<span class="sql-keyword">WHERE</span>
+  <span class="sql-comment">/* Participa en al menos un proyecto */</span>
+  <span class="sql-keyword">EXISTS</span> (
+    <span class="sql-keyword">SELECT</span> <span class="sql-number">1</span>
+    <span class="sql-keyword">FROM</span> <span class="sql-table">employee_project</span> ep
+    <span class="sql-keyword">WHERE</span> ep.employee_id = e.id
+  )
+
+  <span class="sql-comment">/* Excluir a los "Project Manager" */</span>
+  <span class="sql-keyword">AND NOT EXISTS</span> (
+    <span class="sql-keyword">SELECT</span> <span class="sql-number">1</span>
+    <span class="sql-keyword">FROM</span> <span class="sql-table">employee_project</span> ep2
+    <span class="sql-keyword">WHERE</span> ep2.employee_id = e.id
+      <span class="sql-keyword">AND</span> ep2.role = <span class="sql-string">'Project Manager'</span>
+  )
+
+  <span class="sql-comment">/* Excluir departamentos administrativos */</span>
+  <span class="sql-keyword">AND NOT EXISTS</span> (
+    <span class="sql-keyword">SELECT</span> <span class="sql-number">1</span>
+    <span class="sql-keyword">FROM</span> <span class="sql-table">departments</span> d
+    <span class="sql-keyword">WHERE</span> d.id = e.department_id
+      <span class="sql-keyword">AND</span> d.id <span class="sql-keyword">IN</span> (<span class="sql-number">1</span>,<span class="sql-number">2</span>,<span class="sql-number">9</span>)
+  );</div>
+                    
+                    <div class="info-box">
+                        <strong>💡 Fórmula de Conjuntos:</strong><br>
+                        Resultado = (Empleados ∩ En_Proyecto) - Project_Manager - Deptos_Admin
+                    </div>
+
+                    <h3 style="margin-top: 12px; color: #667eea; font-size: 1em;">🏢 Departamentos Excluidos</h3>
+                    <div style="background: white; padding: 10px 12px; border-radius: 8px; margin-top: 8px; font-size: 0.85em;">
+                        <ul style="list-style: none; padding: 0; line-height: 1.6;">
+                            <li>❌ <strong>1</strong> - Human Resources</li>
+                            <li>❌ <strong>2</strong> - Finance</li>
+                            <li>❌ <strong>9</strong> - Legal</li>
+                            <li>✅ <strong>3, 4, 5...</strong> - Technology, Marketing, Sales, etc. (permitidos)</li>
+                        </ul>
+                    </div>
+                    
+                    <h3 style="margin-top: 12px; color: #667eea; font-size: 1em;">🏷️ Leyenda</h3>
+                    <div class="legend-mini">
+                        <div class="legend-mini-item">
+                            <div class="legend-mini-color" style="background: rgba(255, 193, 7, 0.3); border-color: #ffc107;"></div>
+                            <strong>Emp:</strong> Empleados
+                        </div>
+                        <div class="legend-mini-item">
+                            <div class="legend-mini-color" style="background: rgba(23, 162, 184, 0.3); border-color: #17a2b8;"></div>
+                            <strong>Proy:</strong> En Proyecto
+                        </div>
+                        <div class="legend-mini-item">
+                            <div class="legend-mini-color" style="background: rgba(220, 53, 69, 0.3); border-color: #dc3545;"></div>
+                            <strong>PM:</strong> Project Manager
+                        </div>
+                        <div class="legend-mini-item">
+                            <div class="legend-mini-color" style="background: rgba(108, 117, 125, 0.3); border-color: #6c757d;"></div>
+                            <strong>Admin:</strong> Deptos 1,2,9
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="diagram-panel">
+                    <h2 style="color: #495057; margin-bottom: 10px; font-size: 1.15em; border-bottom: 2px solid #667eea; padding-bottom: 6px;">
+                        📊 Diagrama Interactivo
+                    </h2>
+                    <div class="controls">
+                        <button class="step-btn step-0 active" onclick="showStep(2, 0)">Todos</button>
+                        <button class="step-btn step-1" onclick="showStep(2, 1)">Empleados</button>
+                        <button class="step-btn step-2" onclick="showStep(2, 2)">+ En Proyecto</button>
+                        <button class="step-btn step-3" onclick="showStep(2, 3)">- Project Manager</button>
+                        <button class="step-btn step-4" onclick="showStep(2, 4)">- Deptos Admin</button>
+                        <button class="step-btn step-5" onclick="showStep(2, 5)">✓ Resultado</button>
+                    </div>
+                    <div class="svg-container">
+                        <svg id="vennDiagram2" width="100%" height="550" viewBox="0 0 900 550"></svg>
+                    </div>
+                    
+                    <div class="step-explanation">
+                        <div id="step2-0" class="step-info active">
+                            <h3>📊 Todos los Empleados</h3>
+                            <p>Conjunto inicial de la tabla employees.</p>
+                        </div>
+                        <div id="step2-1" class="step-info">
+                            <h3>🔸 Paso 1: Empleados</h3>
+                            <p>Conjunto base con todos los empleados.</p>
+                            <div class="formula">FROM employees e</div>
+                        </div>
+                        <div id="step2-2" class="step-info">
+                            <h3>✅ Paso 2: Empleados ∩ En Proyecto</h3>
+                            <p>Intersección con empleados que participan en al menos un proyecto.</p>
+                            <div class="formula">AND EXISTS (SELECT 1 FROM employee_project ep WHERE ep.employee_id = e.id)</div>
+                        </div>
+                        <div id="step2-3" class="step-info">
+                            <h3>❌ Paso 3: Excluir Project Manager</h3>
+                            <p>Se quitan los empleados que son "Project Manager" en algún proyecto.</p>
+                            <div class="formula">AND NOT EXISTS (SELECT 1 FROM employee_project WHERE role = 'Project Manager')</div>
+                        </div>
+                        <div id="step2-4" class="step-info">
+                            <h3>❌ Paso 4: Excluir Departamentos Administrativos</h3>
+                            <p>Se quitan los empleados de los departamentos 1, 2 y 9.</p>
+                            <div class="formula">AND NOT EXISTS (SELECT 1 FROM departments WHERE id = e.department_id AND id IN (1,2,9))</div>
+                        </div>
+                        <div id="step2-5" class="step-info">
+                            <h3>🎯 Resultado Final</h3>
+                            <p><strong>Empleados operativos en proyectos, sin cargo directivo ni área administrativa</strong></p>
+                            <ul>
+                                <li>✓ Participan en algún proyecto</li>
+                                <li>✗ NO son Project Manager</li>
+                                <li>✗ NO pertenecen a deptos administrativos (1,2,9)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentExercise = 1;
+        let currentSteps = [0, 0];
+
+        function switchExercise(exercise) {
+            currentExercise = exercise;
+            
+            document.querySelectorAll('.exercise-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === exercise - 1);
+            });
+            
+            document.querySelectorAll('.exercise-content').forEach((content, idx) => {
+                content.classList.toggle('active', idx === exercise - 1);
+            });
+            
+            // Redraw current diagram
+            if (exercise === 1) {
+                drawEmployeesDiagram(currentSteps[0]);
+            } else {
+                drawUsersDiagram(currentSteps[1]);
+            }
+        }
+
+        function showStep(exercise, step) {
+            currentSteps[exercise - 1] = step;
+            
+            const containerPrefix = exercise === 1 ? '' : '';
+            document.querySelectorAll(`#exercise${exercise} .step-btn`).forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === step);
+            });
+            
+            document.querySelectorAll(`#step${exercise}-${step === 0 ? 0 : ''}`).forEach(info => {
+                info.classList.remove('active');
+            });
+            
+            for (let i = 0; i <= 5; i++) {
+                const el = document.getElementById(`step${exercise}-${i}`);
+                if (el) el.classList.toggle('active', i === step);
+            }
+            
+            if (exercise === 1) {
+                drawEmployeesDiagram(step);
+            } else {
+                drawUsersDiagram(step);
+            }
+        }
+
+        function drawEmployeesDiagram(step) {
+            const svg = document.getElementById('vennDiagram1');
+            svg.innerHTML = '';
+            
+            const width = 800;
+            const height = 550;
+            
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+            filter.setAttribute('id', 'glow1');
+            filter.innerHTML = `<feGaussianBlur stdDeviation="4" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>`;
+            defs.appendChild(filter);
+            svg.appendChild(defs);
+            
+            const circles = {
+                a: { cx: 300, cy: 250, r: 160, color: 'rgba(40, 167, 69, 0.25)', stroke: '#28a745', strokeWidth: 3 },
+                b: { cx: 480, cy: 250, r: 160, color: 'rgba(23, 162, 184, 0.25)', stroke: '#17a2b8', strokeWidth: 3 },
+                c: { cx: 390, cy: 340, r: 140, color: 'rgba(255, 193, 7, 0.25)', stroke: '#ffc107', strokeWidth: 3 },
+                d: { cx: 510, cy: 180, r: 95, color: 'rgba(220, 53, 69, 0.25)', stroke: '#dc3545', strokeWidth: 3 }
+            };
+            
+            if (step >= 1) drawCircle1(svg, circles.a, 'A\nDepartamento', step >= 1);
+            if (step >= 2) drawCircle1(svg, circles.b, 'B\nTechnical Lead', step >= 2);
+            if (step >= 3) drawCircle1(svg, circles.c, 'C\nSalario > Prom', step >= 3);
+            if (step >= 4) drawCircle1(svg, circles.d, 'D\nProject Manager', step >= 4);
+            
+            if (step === 5) {
+                // Create clip paths for A, B, and C
+                const clipPathA = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+                clipPathA.setAttribute('id', 'clipA');
+                const clipCircleA = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                clipCircleA.setAttribute('cx', '300');
+                clipCircleA.setAttribute('cy', '250');
+                clipCircleA.setAttribute('r', '160');
+                clipPathA.appendChild(clipCircleA);
+                defs.appendChild(clipPathA);
+                
+                const clipPathB = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+                clipPathB.setAttribute('id', 'clipB');
+                const clipCircleB = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                clipCircleB.setAttribute('cx', '480');
+                clipCircleB.setAttribute('cy', '250');
+                clipCircleB.setAttribute('r', '160');
+                clipPathB.appendChild(clipCircleB);
+                defs.appendChild(clipPathB);
+                
+                // Create mask to exclude D (managers)
+                const mask = document.createElementNS('http://www.w3.org/2000/svg', 'mask');
+                mask.setAttribute('id', 'maskD');
+                const maskRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                maskRect.setAttribute('width', '800');
+                maskRect.setAttribute('height', '550');
+                maskRect.setAttribute('fill', 'white');
+                mask.appendChild(maskRect);
+                const maskCircleD = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                maskCircleD.setAttribute('cx', '510');
+                maskCircleD.setAttribute('cy', '180');
+                maskCircleD.setAttribute('r', '95');
+                maskCircleD.setAttribute('fill', 'black');
+                mask.appendChild(maskCircleD);
+                defs.appendChild(mask);
+                
+                // Draw C clipped by A and B, then masked to exclude D
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.setAttribute('clip-path', 'url(#clipA)');
+                
+                const g2 = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g2.setAttribute('clip-path', 'url(#clipB)');
+                
+                const result = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                result.setAttribute('cx', '390');
+                result.setAttribute('cy', '340');
+                result.setAttribute('r', '140');
+                result.setAttribute('fill', 'rgba(111, 66, 193, 0.8)');
+                result.setAttribute('mask', 'url(#maskD)');
+                result.setAttribute('filter', 'url(#glow1)');
+                
+                g2.appendChild(result);
+                g.appendChild(g2);
+                svg.appendChild(g);
+                
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', '380');
+                text.setAttribute('y', '285');
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('font-size', '18');
+                text.setAttribute('font-weight', 'bold');
+                text.setAttribute('fill', 'white');
+                text.textContent = 'RESULTADO';
+                svg.appendChild(text);
+            }
+            
+            const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            title.setAttribute('x', width / 2);
+            title.setAttribute('y', 30);
+            title.setAttribute('text-anchor', 'middle');
+            title.setAttribute('font-size', '22');
+            title.setAttribute('font-weight', 'bold');
+            title.setAttribute('fill', '#495057');
+            title.textContent = ['Inicio', 'Conjunto A', 'A ∩ B', 'A ∩ B ∩ C', '(A ∩ B ∩ C) - D', 'Resultado Final'][step];
+            svg.appendChild(title);
+        }
+
+        function drawCircle1(svg, circle, label, highlight) {
+            const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            c.setAttribute('cx', circle.cx);
+            c.setAttribute('cy', circle.cy);
+            c.setAttribute('r', circle.r);
+            c.setAttribute('fill', circle.color);
+            c.setAttribute('stroke', circle.stroke);
+            c.setAttribute('stroke-width', highlight ? circle.strokeWidth : 2);
+            if (highlight) c.setAttribute('filter', 'url(#glow1)');
+            svg.appendChild(c);
+            
+            const lines = label.split('\n');
+            lines.forEach((line, i) => {
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', circle.cx);
+                text.setAttribute('y', circle.cy - circle.r - 20 + (i * 18));
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('font-size', '14');
+                text.setAttribute('font-weight', 'bold');
+                text.setAttribute('fill', circle.stroke);
+                text.textContent = line;
+                svg.appendChild(text);
+            });
+        }
+
+        function drawUsersDiagram(step) {
+            const svg = document.getElementById('vennDiagram2');
+            svg.innerHTML = '';
+            
+            const width = 900;
+            const height = 550;
+            
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+            filter.setAttribute('id', 'glow2');
+            filter.innerHTML = `<feGaussianBlur stdDeviation="4" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>`;
+            defs.appendChild(filter);
+            svg.appendChild(defs);
+            
+            const circles = {
+                users: { cx: 350, cy: 300, r: 200, color: 'rgba(255, 193, 7, 0.25)', stroke: '#ffc107', strokeWidth: 4 },
+                student: { cx: 520, cy: 330, r: 170, color: 'rgba(23, 162, 184, 0.25)', stroke: '#17a2b8', strokeWidth: 4 },
+                teacher: { cx: 350, cy: 240, r: 95, color: 'rgba(220, 53, 69, 0.3)', stroke: '#dc3545', strokeWidth: 4 },
+                roles: { cx: 410, cy: 180, r: 110, color: 'rgba(108, 117, 125, 0.25)', stroke: '#6c757d', strokeWidth: 4 }
+            };
+            
+            if (step >= 1) drawCircle2(svg, circles.users);
+            if (step >= 2) drawCircle2(svg, circles.student);
+            if (step >= 3) drawCircle2(svg, circles.teacher);
+            if (step >= 4) drawCircle2(svg, circles.roles);
+            
+            if (step >= 1) drawLabel2(svg, 200, 180, 'EMPLEADOS', '#ffc107');
+            if (step >= 2) drawLabel2(svg, 650, 260, 'EN PROYECTO', '#17a2b8');
+            if (step >= 3) drawLabel2(svg, 220, 300, 'PROJECT MANAGER', '#dc3545');
+            if (step >= 4) drawLabel2(svg, 410, 130, 'DEPTOS ADMIN (1,2,9)', '#6c757d');
+            
+            if (step === 5) {
+                const clipPath = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+                clipPath.setAttribute('id', 'usersClip');
+                const clipCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                clipCircle.setAttribute('cx', '350');
+                clipCircle.setAttribute('cy', '300');
+                clipCircle.setAttribute('r', '200');
+                clipPath.appendChild(clipCircle);
+                defs.appendChild(clipPath);
+                
+                const mask = document.createElementNS('http://www.w3.org/2000/svg', 'mask');
+                mask.setAttribute('id', 'resultMask');
+                const maskRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                maskRect.setAttribute('width', '900');
+                maskRect.setAttribute('height', '550');
+                maskRect.setAttribute('fill', 'white');
+                mask.appendChild(maskRect);
+                const maskTeacher = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                maskTeacher.setAttribute('cx', '350');
+                maskTeacher.setAttribute('cy', '240');
+                maskTeacher.setAttribute('r', '95');
+                maskTeacher.setAttribute('fill', 'black');
+                mask.appendChild(maskTeacher);
+                const maskRoles = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                maskRoles.setAttribute('cx', '410');
+                maskRoles.setAttribute('cy', '180');
+                maskRoles.setAttribute('r', '110');
+                maskRoles.setAttribute('fill', 'black');
+                mask.appendChild(maskRoles);
+                defs.appendChild(mask);
+                
+                const result = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                result.setAttribute('cx', '520');
+                result.setAttribute('cy', '330');
+                result.setAttribute('r', '170');
+                result.setAttribute('fill', 'rgba(139, 69, 177, 0.75)');
+                result.setAttribute('clip-path', 'url(#usersClip)');
+                result.setAttribute('mask', 'url(#resultMask)');
+                result.setAttribute('filter', 'url(#glow2)');
+                svg.appendChild(result);
+                
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', '440');
+                text.setAttribute('y', '345');
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('font-size', '20');
+                text.setAttribute('font-weight', 'bold');
+                text.setAttribute('fill', 'white');
+                text.textContent = 'RESULTADO';
+                svg.appendChild(text);
+            }
+            
+            const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            title.setAttribute('x', width / 2);
+            title.setAttribute('y', 30);
+            title.setAttribute('text-anchor', 'middle');
+            title.setAttribute('font-size', '24');
+            title.setAttribute('font-weight', 'bold');
+            title.setAttribute('fill', '#495057');
+            title.textContent = ['Inicio', 'Empleados', 'Empleados ∩ En Proyecto', '- Project Manager', '- Deptos Admin', 'Resultado Final'][step];
+            svg.appendChild(title);
+        }
+
+        function drawCircle2(svg, circle) {
+            const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            c.setAttribute('cx', circle.cx);
+            c.setAttribute('cy', circle.cy);
+            c.setAttribute('r', circle.r);
+            c.setAttribute('fill', circle.color);
+            c.setAttribute('stroke', circle.stroke);
+            c.setAttribute('stroke-width', circle.strokeWidth);
+            c.setAttribute('filter', 'url(#glow2)');
+            svg.appendChild(c);
+        }
+
+        function drawLabel2(svg, x, y, text, color) {
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            const textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            textEl.setAttribute('x', x);
+            textEl.setAttribute('y', y);
+            textEl.setAttribute('text-anchor', 'middle');
+            textEl.setAttribute('font-size', '13');
+            textEl.setAttribute('font-weight', 'bold');
+            textEl.setAttribute('fill', 'white');
+            textEl.textContent = text;
+            svg.appendChild(textEl);
+            const bbox = textEl.getBBox();
+            rect.setAttribute('x', bbox.x - 5);
+            rect.setAttribute('y', bbox.y - 2);
+            rect.setAttribute('width', bbox.width + 10);
+            rect.setAttribute('height', bbox.height + 4);
+            rect.setAttribute('fill', color);
+            rect.setAttribute('rx', '4');
+            svg.insertBefore(rect, textEl);
+        }
+
+        // Initialize
+        drawEmployeesDiagram(0);
+        drawUsersDiagram(0);
+    </script>
+</body>
+</html>
