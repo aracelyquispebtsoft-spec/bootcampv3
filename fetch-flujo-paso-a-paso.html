@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>El flujo de fetch(), paso a paso · obtener y crear</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EBEEF6; --paper:#fff; --ink:#151A36; --ink2:#3A4166; --muted:#767DA0;
+  --line:#DCE1EE; --line2:#C6CDE0;
+  --net:#0E9384; --loop:#E8820C; --err:#D6336C; --post:#6C4CE0;
+  --sans:"IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --disp:"Bricolage Grotesque","IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sh:0 1px 2px rgba(21,26,54,.06), 0 10px 26px -18px rgba(21,26,54,.45);
+  --stop:54px;
+}
+*{box-sizing:border-box}
+body{margin:0; background:radial-gradient(1100px 520px at 15% -10%, #fff 0%, rgba(255,255,255,0) 60%), var(--bg);
+     color:var(--ink); font-family:var(--sans); font-size:15px; -webkit-font-smoothing:antialiased}
+.wrap{max-width:1560px; margin:0 auto; padding:14px 16px 36px}
+.brand{height:34px; width:auto; display:block; margin:0 0 12px}
+
+h1{font-family:var(--disp); font-weight:800; letter-spacing:-.03em; line-height:1.05; margin:0 0 5px; font-size:clamp(23px,2.7vw,34px)}
+h1 em{font-style:normal; color:var(--net)}
+h1 em.p{color:var(--post)}
+.sub{margin:0 0 12px; color:var(--ink2); max-width:82ch; font-size:14px}
+
+.card{background:var(--paper); border:1px solid var(--line); border-radius:14px; box-shadow:var(--sh);
+      display:flex; flex-direction:column; min-height:0; overflow:hidden}
+.card-h{display:flex; align-items:center; gap:8px; padding:9px 12px; border-bottom:1px solid var(--line); flex:none}
+.card-h .n{font-family:var(--mono); font-size:11px; font-weight:600; color:#fff; background:var(--ink);
+           width:19px; height:19px; border-radius:6px; display:grid; place-items:center; flex:none}
+.card-h h2{font-family:var(--disp); font-size:13.5px; font-weight:600; margin:0; letter-spacing:-.01em}
+.card-h .hint{margin-left:auto; font-family:var(--mono); font-size:10.5px; color:var(--muted); white-space:nowrap}
+.body{padding:12px; display:flex; flex-direction:column; gap:10px; flex:1; min-height:0}
+
+/* controles */
+.bar{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:11px}
+button.btn{font-family:var(--sans); font-size:14px; font-weight:600; border-radius:10px; cursor:pointer;
+           border:1px solid var(--ink); background:var(--ink); color:#fff; padding:9px 16px}
+button.btn.ghost{background:#fff; color:var(--ink); border-color:var(--line2)}
+button.btn.go{background:var(--net); border-color:var(--net)}
+button.btn:disabled{opacity:.45; cursor:default}
+button.btn:hover:not(:disabled){filter:brightness(1.08)}
+button:focus-visible{outline:2px solid var(--loop); outline-offset:2px}
+.seg{display:inline-flex; border:1px solid var(--line2); border-radius:10px; overflow:hidden; background:#fff}
+.seg button{appearance:none; border:0; background:transparent; padding:9px 13px; cursor:pointer;
+            font-family:var(--mono); font-size:12.5px; color:var(--ink2); white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--ink); color:#fff}
+.seg button[aria-pressed="true"].post{background:var(--post)}
+.seg button[aria-pressed="true"].bad{background:var(--err)}
+.seg .lbl{padding:9px 11px; font-family:var(--mono); font-size:11px; color:var(--muted); background:#F6F8FC; white-space:nowrap}
+.stepcount{font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:auto; font-variant-numeric:tabular-nums}
+
+/* narración */
+.narr{border:1px solid var(--line); border-left:3px solid var(--loop); background:#fff; border-radius:0 12px 12px 0;
+      padding:11px 15px; margin-bottom:12px; box-shadow:var(--sh); display:flex; gap:12px; align-items:flex-start; min-height:60px}
+.narr .badge{flex:none; font-family:var(--mono); font-size:11px; background:var(--loop); color:#fff;
+             border-radius:6px; padding:3px 8px; margin-top:2px; white-space:nowrap}
+.narr p{margin:0; font-size:14.5px; color:var(--ink2); line-height:1.45}
+.narr b{color:var(--ink)}
+.narr code{font-family:var(--mono); font-size:12.5px; background:#F2F4FB; border:1px solid var(--line); padding:1px 5px; border-radius:5px}
+
+/* 4 columnas */
+.grid{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px; align-items:stretch}
+.grid > *{min-width:0}
+
+/* código */
+.code{background:#12162E; border-color:#12162E}
+.code .card-h{border-bottom-color:#232848}
+.code .card-h h2{color:#fff}
+.code .card-h .hint{color:#6B76AB}
+pre{margin:0; padding:9px 0 11px; font-family:var(--mono); font-size:11.8px; line-height:1.78; color:#D8DEF7;
+    overflow:auto; flex:1}
+.ln{display:block; padding:0 10px 0 0; white-space:pre; transition:background .25s}
+.ln .no{display:inline-block; width:24px; text-align:right; margin-right:9px; color:#4C548A; user-select:none}
+.ln.on{background:rgba(14,147,132,.2); box-shadow:inset 3px 0 0 var(--net)}
+.ln.on.bad{background:rgba(214,51,108,.2); box-shadow:inset 3px 0 0 var(--err)}
+.k{color:#C792EA} .f{color:#82AAFF} .s{color:#C3E88D} .w{color:#FFC178} .c{color:#5E6790; font-style:italic}
+
+/* consola — clases propias para no chocar con nada */
+.out{background:#12162E; border-radius:11px; padding:10px 12px; font-family:var(--mono); font-size:11.8px;
+     color:#D8DEF7; flex:1; min-height:150px; overflow:auto; word-break:break-word; line-height:1.65}
+.out .row{animation:slide .3s}
+.out .c-dim{color:#5E6790} .out .c-ok{color:#5FD6C6} .out .c-warn{color:#FFC178}
+.out .c-bad{color:#FF8FB4} .out .c-tok{color:#82AAFF} .out .c-post{color:#B79CFF}
+@keyframes slide{from{opacity:0; transform:translateX(-5px)} to{opacity:1; transform:none}}
+
+/* recorrido vertical */
+.trip{position:relative; padding-left:32px}
+.rail{position:absolute; left:11px; top:calc(var(--stop)/2); bottom:calc(var(--stop)/2); width:2px;
+      background:repeating-linear-gradient(180deg, var(--line2) 0 6px, transparent 6px 13px)}
+.railfill{position:absolute; left:0; top:0; width:2px; height:0; background:var(--net); transition:height .5s cubic-bezier(.4,0,.3,1)}
+.packet{position:absolute; left:12px; min-width:22px; height:22px; padding:0 5px; margin-left:-11px; border-radius:7px;
+        background:var(--net); color:#fff; display:grid; place-items:center; font-family:var(--mono); font-size:10.5px;
+        opacity:0; z-index:2; transition:top .55s cubic-bezier(.4,0,.3,1), opacity .3s, background .3s; white-space:nowrap}
+.packet.show{opacity:1}
+.packet.back{background:var(--loop)} .packet.dead{background:var(--err)}
+.stop{height:var(--stop); display:flex; align-items:center; gap:10px}
+.stop .box{width:36px; height:36px; flex:none; border-radius:11px; background:#fff; border:2px solid var(--line2);
+           display:grid; place-items:center; font-size:15px; transition:border-color .3s, box-shadow .3s}
+.stop .tx b{display:block; font-family:var(--mono); font-size:11.5px; color:var(--ink2); font-weight:600; line-height:1.2}
+.stop .tx span{display:block; font-family:var(--mono); font-size:10px; color:var(--muted); line-height:1.25}
+.stop.on .box{border-color:var(--net); box-shadow:0 0 0 5px rgba(14,147,132,.13)}
+.stop.on .tx b{color:var(--net)}
+.stop.dead .box{border-color:var(--err); box-shadow:0 0 0 5px rgba(214,51,108,.13)}
+.stop.dead .tx b{color:var(--err)}
+.note{font-family:var(--mono); font-size:10.5px; color:var(--muted); margin-top:4px; min-height:15px; line-height:1.35}
+
+/* estado */
+.state{display:flex; flex-direction:column; gap:7px; border-top:1px solid var(--line); padding-top:10px}
+.srow .lab{display:block; font-family:var(--mono); font-size:10px; letter-spacing:.05em; text-transform:uppercase;
+           color:var(--muted); margin-bottom:3px}
+.srow .val{display:block; font-family:var(--mono); font-size:11.5px; color:var(--ink); word-break:break-word}
+.pill{display:inline-block; font-family:var(--mono); font-size:11px; border:1px solid var(--line2);
+      border-radius:999px; padding:3px 9px; color:var(--muted); background:#fff; max-width:100%; word-break:break-word}
+.pill.wait{border-color:var(--loop); color:var(--loop); background:#FFFBF5}
+.pill.ok{border-color:var(--net); color:var(--net); background:#F2FBF9}
+.pill.bad{border-color:var(--err); color:var(--err); background:#FEF3F7}
+.pill.empty{opacity:.55}
+.frame{display:inline-block; font-family:var(--mono); font-size:11px; border:1px solid var(--ink); background:#F3F5FC;
+       border-radius:8px; padding:4px 8px; animation:pop .3s}
+@keyframes pop{from{opacity:0; transform:translateY(-5px)} to{opacity:1; transform:none}}
+.freetag{font-family:var(--mono); font-size:11px; color:var(--net)}
+
+/* pantalla */
+.screen{border:1px solid var(--line2); border-radius:12px; overflow:hidden; background:#F7F9FD;
+        flex:1; min-height:200px; display:flex; flex-direction:column}
+.chrome{display:flex; gap:5px; padding:8px 10px; background:#E9EDF6; border-bottom:1px solid var(--line2); flex:none}
+.chrome i{width:9px; height:9px; border-radius:99px; background:#C6CDE0; display:block}
+.screen-body{padding:13px; flex:1; display:flex; flex-direction:column; justify-content:center; gap:8px}
+.skel{height:11px; border-radius:6px; background:linear-gradient(90deg,#E3E8F3 25%,#F1F4FA 50%,#E3E8F3 75%);
+      background-size:200% 100%; animation:sh 1.2s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+.idle{color:var(--muted); font-size:12px; text-align:center; font-family:var(--mono); line-height:1.4}
+.ucard{background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; animation:pop .35s}
+.ucard .av{width:40px; height:40px; border-radius:99px; background:var(--net); color:#fff; display:grid; place-items:center;
+           font-family:var(--disp); font-weight:800; font-size:16px; margin-bottom:8px}
+.ucard.new .av{background:var(--post)}
+.ucard h4{font-family:var(--disp); font-size:15px; margin:0 0 3px; line-height:1.2}
+.ucard p{margin:0; font-size:11.5px; color:var(--ink2); font-family:var(--mono); word-break:break-word}
+.ucard .ok-tag{display:inline-block; font-family:var(--mono); font-size:10px; color:var(--post); background:#F4F0FE;
+               border:1px solid #D9C9F2; border-radius:999px; padding:2px 8px; margin-bottom:8px}
+.errbox{background:#FEF3F7; border:1px solid var(--err); border-radius:12px; padding:12px; animation:pop .35s}
+.errbox h4{font-family:var(--disp); font-size:14px; margin:0 0 5px; color:var(--err); line-height:1.25}
+.errbox p{margin:0; font-size:11.5px; color:var(--ink2); font-family:var(--mono); word-break:break-word}
+/* formulario simulado */
+.fld{margin-bottom:7px}
+.fld label{display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin-bottom:3px}
+.fld .inp{background:#fff; border:1px solid var(--line2); border-radius:8px; padding:7px 9px; font-family:var(--mono); font-size:11.5px; color:var(--ink)}
+.btnmock{text-align:center; background:var(--post); color:#fff; border-radius:9px; padding:8px; font-weight:600; font-size:13px; margin-top:9px}
+.btnmock.off{background:#C9BCF0}
+.proof{display:flex; align-items:center; gap:9px; flex-wrap:wrap; flex:none}
+.proof button{appearance:none; cursor:pointer; border:1px solid var(--net); color:var(--net); background:#F2FBF9;
+              border-radius:9px; padding:7px 11px; font-family:var(--sans); font-size:12.5px; font-weight:600}
+.proof .cnt{font-family:var(--mono); font-size:10.5px; color:var(--muted); line-height:1.3}
+
+/* tarjetas de cierre — clase propia, sin colisiones */
+.keycards{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:12px}
+.keycard{background:#fff; border:1px solid var(--line); border-radius:13px; padding:12px 14px; box-shadow:var(--sh)}
+.keycard h4{margin:0 0 4px; font-family:var(--disp); font-size:13.5px}
+.keycard p{margin:0; font-size:12.5px; color:var(--ink2); line-height:1.45}
+.keycard code{font-family:var(--mono); font-size:11.5px; background:#F2F4FB; padding:1px 5px; border-radius:5px}
+
+@media (max-width:1240px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:700px){ .grid{grid-template-columns:1fr} .keycards{grid-template-columns:1fr} .stepcount{margin-left:0} }
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms !important; transition-duration:.001ms !important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <img class="brand" src="img/logo.png" alt="btsoft — Transformando ideas en codigo">
+  <h1>El viaje de un <em>fetch()</em>, paso a paso</h1>
+  <p class="sub">El mismo recorrido, dos operaciones: <b>obtener</b> un usuario y <b>crear</b> uno nuevo. Avanza paso a paso y mira a la vez qué línea se ejecuta, dónde está la petición, en qué estado están las dos Promises y qué ve el usuario.</p>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Operación">
+      <span class="lbl">operación</span>
+      <button data-op="get" aria-pressed="true">obtener · GET</button>
+      <button data-op="post" class="post" aria-pressed="false">crear · POST</button>
+    </div>
+    <button class="btn go" id="step">Siguiente paso</button>
+    <button class="btn ghost" id="auto">Reproducir todo</button>
+    <button class="btn ghost" id="reset">Reiniciar</button>
+    <div class="seg" role="group" aria-label="Estado del servidor">
+      <span class="lbl">el servidor</span>
+      <button data-case="ok" aria-pressed="true">responde bien</button>
+      <button data-case="down" class="bad" aria-pressed="false">no responde</button>
+    </div>
+    <span class="stepcount" id="count">paso 0</span>
+  </div>
+
+  <div class="narr">
+    <span class="badge" id="badge">inicio</span>
+    <p id="narr">Pulsa <b>Siguiente paso</b>.</p>
+  </div>
+
+  <div class="grid">
+    <div class="card code">
+      <div class="card-h"><span class="n">1</span><h2 id="filename">app.js</h2><span class="hint">línea en curso</span></div>
+      <pre id="code"></pre>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><span class="n">2</span><h2>Dónde está la petición</h2><span class="hint" id="hintdir">ida</span></div>
+      <div class="body">
+        <div class="trip">
+          <div class="rail"><div class="railfill" id="railfill"></div></div>
+          <div class="packet" id="packet">↓</div>
+          <div class="stop" id="st0"><div class="box">🧠</div><div class="tx"><b>Call Stack</b><span>tu código</span></div></div>
+          <div class="stop" id="st1"><div class="box">🌐</div><div class="tx"><b>Web API</b><span>del navegador</span></div></div>
+          <div class="stop" id="st2"><div class="box">📡</div><div class="tx"><b>Red</b><span>latencia</span></div></div>
+          <div class="stop" id="st3"><div class="box">🗄️</div><div class="tx"><b>Servidor</b><span>la API</span></div></div>
+        </div>
+        <div class="note" id="note"></div>
+        <div class="state">
+          <div class="srow"><span class="lab">Call Stack</span><span class="val" id="v-stack"></span></div>
+          <div class="srow"><span class="lab">Promise · fetch()</span><span class="val" id="v-p1"></span></div>
+          <div class="srow"><span class="lab">variable res</span><span class="val" id="v-res"></span></div>
+          <div class="srow"><span class="lab">Promise · .json()</span><span class="val" id="v-p2"></span></div>
+          <div class="srow"><span class="lab">variable data</span><span class="val" id="v-data"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><span class="n">3</span><h2>Consola</h2></div>
+      <div class="body"><div class="out" id="out"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><span class="n">4</span><h2>Lo que ve el usuario</h2></div>
+      <div class="body">
+        <div class="screen">
+          <div class="chrome"><i></i><i></i><i></i></div>
+          <div class="screen-body" id="screen"></div>
+        </div>
+        <div class="proof">
+          <button id="clicker">Púlsame mientras carga</button>
+          <span class="cnt" id="clicks">0 clics · la página nunca se congela</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="keycards">
+    <div class="keycard"><h4>Dos pausas, no una</h4><p>Da igual GET o POST: siempre hay <b>dos await</b>, uno por el <code>Response</code> y otro por el <code>.json()</code>.</p></div>
+    <div class="keycard"><h4>GET pide · POST envía</h4><p>Lo único que cambia es el <b>segundo argumento</b>: <code>method</code>, <code>headers</code> y <code>body</code>. El flujo es idéntico.</p></div>
+    <div class="keycard"><h4>El hilo nunca se bloquea</h4><p><code>await</code> pausa <b>solo esa función</b>. La página sigue respondiendo: pruébalo con el botón del bloque&nbsp;4.</p></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const codeEl=$("#code"), outEl=$("#out"), narrEl=$("#narr"), badgeEl=$("#badge"),
+      packet=$("#packet"), railfill=$("#railfill"), screenEl=$("#screen"), noteEl=$("#note"),
+      countEl=$("#count"), hintdir=$("#hintdir"), fileEl=$("#filename");
+const stops=[$("#st0"),$("#st1"),$("#st2"),$("#st3")];
+const STOP=54;
+
+/* ---------- los dos ejemplos ---------- */
+const CODE={
+ get:[
+  `<span class="k">const</span> URL = <span class="s">'/api/usuarios/1'</span>;`,
+  ``,
+  `<span class="k">async function</span> <span class="f">cargarUsuario</span>() {`,
+  `  pantalla.<span class="f">mostrarCargando</span>();`,
+  `  <span class="k">try</span> {`,
+  `    <span class="k">const</span> res  = <span class="k">await</span> <span class="f">fetch</span>(URL);`,
+  `    <span class="k">const</span> data = <span class="k">await</span> res.<span class="f">json</span>();`,
+  `    pantalla.<span class="f">mostrarUsuario</span>(data);`,
+  `  } <span class="k">catch</span> (error) {`,
+  `    pantalla.<span class="f">mostrarError</span>(error);`,
+  `  }`,
+  `}`,
+  `<span class="f">cargarUsuario</span>();`
+ ],
+ post:[
+  `<span class="k">const</span> URL = <span class="s">'/api/usuarios'</span>;`,
+  `<span class="k">const</span> nuevo = {`,
+  `  nombre: <span class="s">'Ada Lovelace'</span>,`,
+  `  email:  <span class="s">'ada@demo.com'</span>`,
+  `};`,
+  ``,
+  `<span class="k">async function</span> <span class="f">crearUsuario</span>() {`,
+  `  pantalla.<span class="f">mostrarEnviando</span>();`,
+  `  <span class="k">try</span> {`,
+  `    <span class="k">const</span> res  = <span class="k">await</span> <span class="f">fetch</span>(URL, {`,
+  `      <span class="w">method</span>: <span class="s">'POST'</span>,`,
+  `      <span class="w">headers</span>: { <span class="s">'Content-Type'</span>: <span class="s">'application/json'</span> },`,
+  `      <span class="w">body</span>: <span class="f">JSON</span>.<span class="f">stringify</span>(nuevo)`,
+  `    });`,
+  `    <span class="k">const</span> data = <span class="k">await</span> res.<span class="f">json</span>();`,
+  `    pantalla.<span class="f">mostrarCreado</span>(data);`,
+  `  } <span class="k">catch</span> (error) {`,
+  `    pantalla.<span class="f">mostrarError</span>(error);`,
+  `  }`,
+  `}`,
+  `<span class="f">crearUsuario</span>();`
+ ]
+};
+const USER={ id:1, nombre:"Leanne Graham", email:"leanne@april.biz", empresa:"Romaguera-Crona" };
+const NUEVO={ nombre:"Ada Lovelace", email:"ada@demo.com" };
+const CREADO={ id:11, nombre:"Ada Lovelace", email:"ada@demo.com" };
+
+function paintCode(op){
+  fileEl.textContent = op==="get" ? "obtener.js" : "crear.js";
+  codeEl.innerHTML = CODE[op].map((l,i)=>
+    `<span class="ln" data-l="${i+1}"><span class="no">${i+1}</span>${l}</span>`).join("");
+}
+
+/* ---------- estado ---------- */
+const BLANK={ line:0, bad:false, stack:[], p1:["—","empty"], p2:["—","empty"],
+              res:["—","empty"], data:["—","empty"], pos:null, dir:"f", dead:false,
+              active:[], screen:"idle", err:null, note:"", carry:"" };
+let st, op="get", caso="ok", i=0, steps=[], timer=null;
+
+/* ---------- render ---------- */
+function render(){
+  const cur = Array.isArray(st.line) ? st.line : [st.line];
+  codeEl.querySelectorAll(".ln").forEach(el=>{
+    const on=cur.includes(Number(el.dataset.l));
+    el.classList.toggle("on", on);
+    el.classList.toggle("bad", on && st.bad);
+  });
+
+  $("#v-stack").innerHTML = st.stack.length
+    ? st.stack.map(f=>`<span class="frame">${f}</span>`).join(" ")
+    : `<span class="freetag">vacío · el hilo está libre ✓</span>`;
+  const pill=v=>`<span class="pill ${v[1]}">${v[0]}</span>`;
+  $("#v-p1").innerHTML=pill(st.p1);
+  $("#v-p2").innerHTML=pill(st.p2);
+  $("#v-res").innerHTML=pill(st.res);
+  $("#v-data").innerHTML=pill(st.data);
+
+  stops.forEach((s,k)=>{
+    s.classList.toggle("on", st.active.includes(k));
+    s.classList.toggle("dead", st.dead && k===3);
+  });
+
+  if(st.pos==null){
+    packet.classList.remove("show");
+    railfill.style.height="0";
+  }else{
+    packet.classList.add("show");
+    packet.style.top=(st.pos*STOP + STOP/2 - 11)+"px";
+    packet.classList.toggle("back", st.dir==="b");
+    packet.classList.toggle("dead", st.dir==="x");
+    packet.textContent = st.carry || (st.dir==="f" ? "↓" : (st.dir==="b" ? "↑" : "✕"));
+    railfill.style.height=(st.pos*STOP)+"px";
+  }
+  hintdir.textContent = st.dir==="f" ? "ida" : (st.dir==="b" ? "vuelta" : "sin respuesta");
+  noteEl.textContent = st.note || "";
+
+  screenEl.innerHTML = screenHTML();
+  countEl.textContent=`paso ${i} de ${steps.length}`;
+}
+function screenHTML(){
+  if(st.screen==="error")
+    return `<div class="errbox"><h4>No se pudo completar</h4><p>${st.err||""}</p></div>`;
+  if(op==="get"){
+    if(st.screen==="idle") return `<div class="idle">— la app aún no ha pedido nada —</div>`;
+    if(st.screen==="loading") return `<div class="idle" style="text-align:left;margin-bottom:4px">Cargando…</div>
+      <div class="skel" style="width:60%"></div><div class="skel" style="width:90%"></div><div class="skel" style="width:72%"></div>`;
+    return `<div class="ucard"><div class="av">LG</div><h4>${USER.nombre}</h4>
+      <p>${USER.email}</p><p style="color:var(--muted)">${USER.empresa}</p></div>`;
+  }
+  const form=(off)=>`<div class="fld"><label>Nombre</label><div class="inp">${NUEVO.nombre}</div></div>
+    <div class="fld"><label>Email</label><div class="inp">${NUEVO.email}</div></div>
+    <div class="btnmock ${off?"off":""}">${off?"Guardando…":"Guardar"}</div>`;
+  if(st.screen==="idle") return form(false);
+  if(st.screen==="loading") return form(true);
+  return `<div class="ucard new"><span class="ok-tag">201 · creado</span><div class="av">AL</div>
+    <h4>${CREADO.nombre}</h4><p>${CREADO.email}</p>
+    <p style="color:var(--muted)">id asignado por el servidor: ${CREADO.id}</p></div>`;
+}
+function log(html){ outEl.insertAdjacentHTML("beforeend", `<div class="row">${html}</div>`); outEl.scrollTop=outEl.scrollHeight; }
+function say(badge, html){ badgeEl.textContent=badge; narrEl.innerHTML=html; }
+
+/* ---------- guiones ---------- */
+function build(o, c){
+  const S=[]; const add=f=>S.push(f);
+  const isGet = o==="get";
+
+  if(isGet){
+    add(()=>{ st.line=13; st.stack=["cargarUsuario()"]; st.active=[0];
+      say("1 · síncrono", `<b>cargarUsuario()</b> entra al <b>Call Stack</b> y empieza a ejecutarse como cualquier función normal.`);
+      log(`<span class="c-dim">&gt;</span> cargarUsuario()`); });
+    add(()=>{ st.line=4; st.screen="loading";
+      say("2 · la UI primero", `Antes de pedir nada pintamos <b>«Cargando…»</b>. Es síncrono e instantáneo: el usuario ve que algo está pasando.`);
+      log(`<span class="c-dim">  pantalla: Cargando…</span>`); });
+    add(()=>{ st.line=6; st.p1=["pendiente","wait"]; st.pos=1; st.dir="f"; st.active=[0,1]; st.note="petición GET · sin cuerpo";
+      say("3 · sale la petición", `Se ejecuta <code>fetch(URL)</code>. La petición se la queda el <b>navegador</b> (Web API), igual que hacía <code>setTimeout</code>, y devuelve <b>una Promise pendiente al instante</b>.`);
+      log(`<span class="c-tok">  fetch</span>(URL) → <span class="c-warn">Promise { pendiente }</span>`); });
+    add(()=>{ st.line=6; st.stack=[]; st.pos=2; st.active=[1,2];
+      say("4 · await pausa", `<b>await</b> pausa <u>solo esta función</u>: sale del Call Stack y guarda su continuación. El hilo queda libre — pulsa el botón del bloque 4 y compruébalo.`);
+      log(`<span class="c-dim">  await → cargarUsuario() sale del Call Stack</span>`); });
+    add(()=>{ st.pos=3; st.active=[2,3];
+      say("5 · llega al servidor", `La petición cruza la red: <code>GET /usuarios/1</code>. Ahora mandan la latencia y el servidor.`);
+      log(`<span class="c-dim">  → GET /usuarios/1</span>`); });
+
+    if(c==="ok"){
+      add(()=>{ st.dir="b"; st.pos=2; st.active=[2,3]; st.note="vuelve la respuesta";
+        say("6 · responde", `El servidor encuentra el usuario y responde. Las cabeceras salen primero; el cuerpo con los datos viene detrás.`);
+        log(`<span class="c-dim">  ← HTTP 200 OK</span>`); });
+      add(()=>{ st.pos=null; st.p1=["cumplida ✓","ok"]; st.res=["Response { status: 200 }","ok"];
+        st.stack=["cargarUsuario()"]; st.line=6; st.active=[0]; st.note="";
+        say("7 · vuelve el Response", `La Promise se cumple → su continuación pasa por la <b>cola de microtareas</b> y el <b>Event Loop</b> devuelve la función al Call Stack. <b>Ojo:</b> <code>res</code> es un <code>Response</code>, todavía <u>no</u> son tus datos.`);
+        log(`<span class="c-tok">  res</span> = Response { status: <span class="c-ok">200</span> }`);
+        log(`<span class="c-warn">  ⚠ aquí NO están aún los datos</span>`); });
+      add(()=>{ st.line=7; st.p2=["pendiente","wait"]; st.stack=[];
+        say("8 · segunda promesa", `<code>res.json()</code> lee el cuerpo y lo convierte de texto a objeto. Es <b>otra Promise</b>: la función <b>se pausa por segunda vez</b>.`);
+        log(`<span class="c-tok">  res.json</span>() → <span class="c-warn">Promise { pendiente }</span>`); });
+      add(()=>{ st.line=7; st.p2=["cumplida ✓","ok"]; st.data=["{ id: 1, nombre: 'Leanne…' }","ok"];
+        st.stack=["cargarUsuario()"]; st.active=[0];
+        say("9 · datos listos", `Ahora sí: <code>data</code> es un <b>objeto de JavaScript</b> con el que puedes trabajar.`);
+        log(`<span class="c-tok">  data</span> = <span class="c-ok">${JSON.stringify(USER)}</span>`); });
+      add(()=>{ st.line=8; st.screen="ok";
+        say("10 · pintar", `Con los datos en la mano actualizamos la interfaz. Este paso vuelve a ser síncrono y corriente.`);
+        log(`<span class="c-ok">  pantalla: usuario mostrado ✓</span>`); });
+      add(()=>{ st.line=12; st.stack=[]; st.active=[];
+        say("fin", `<b>una llamada, dos pausas</b>: una por el <code>Response</code> y otra por el <code>.json()</code>. Cambia arriba a <b>crear · POST</b> y verás el mismo recorrido.`);
+        log(`<span class="c-dim">  ✓ cargarUsuario() terminó</span>`); });
+    } else {
+      add(()=>{ st.pos=3; st.dir="x"; st.dead=true; st.active=[2]; st.note="la petición no llega";
+        say("6 · nadie contesta", `El servidor está caído o no hay conexión: <b>la petición no llega a ninguna parte</b>. No habrá <code>Response</code>.`);
+        log(`<span class="c-bad">  ✕ sin respuesta del servidor</span>`); });
+      add(()=>{ st.pos=null; st.p1=["rechazada ✕","bad"]; st.stack=["cargarUsuario()"]; st.line=6; st.bad=true; st.active=[0]; st.note="";
+        say("7 · rechazada", `La Promise de <code>fetch</code> se <b>rechaza</b>. Al reanudarse la función, el <code>await</code> <b>lanza un error</b> en lugar de devolver un valor.`);
+        log(`<span class="c-bad">  TypeError: Failed to fetch</span>`); });
+      add(()=>{ st.line=10; st.screen="error"; st.err="TypeError: Failed to fetch"; st.bad=true;
+        say("8 · entra el catch", `Para eso está el <code>try/catch</code>. Fíjate en que <code>res</code> y <code>data</code> se quedaron vacías: esas líneas <b>nunca se ejecutaron</b>.`);
+        log(`<span class="c-bad">  catch → Failed to fetch</span>`);
+        log(`<span class="c-ok">  pantalla: mensaje de error ✓</span>`); });
+      add(()=>{ st.line=12; st.stack=[]; st.active=[]; st.bad=false; st.dead=false;
+        say("fin", `Sin el <code>try/catch</code> el error quedaría suelto en consola y el usuario seguiría viendo «Cargando…» para siempre.`);
+        log(`<span class="c-dim">  ✓ cargarUsuario() terminó</span>`); });
+    }
+    return S;
+  }
+
+  /* ---------- POST ---------- */
+  add(()=>{ st.line=21; st.stack=["crearUsuario()"]; st.active=[0];
+    say("1 · síncrono", `El usuario pulsó <b>Guardar</b>. <b>crearUsuario()</b> entra al <b>Call Stack</b>: hasta aquí, todo idéntico al caso de obtener.`);
+    log(`<span class="c-dim">&gt;</span> crearUsuario()`); });
+
+  add(()=>{ st.line=8; st.screen="loading";
+    say("2 · bloquear el botón", `Se pinta el estado <b>«Guardando…»</b> y se deshabilita el botón. En un POST esto importa el doble: evita que el usuario cree el mismo registro dos veces.`);
+    log(`<span class="c-dim">  pantalla: Guardando… (botón bloqueado)</span>`); });
+
+  add(()=>{ st.line=13;
+    say("3 · el cuerpo, a texto", `<code>JSON.stringify(nuevo)</code> convierte tu objeto en una <b>cadena de texto</b>. Por la red no viajan objetos de JavaScript: viaja texto.`);
+    log(`<span class="c-post">  body</span> = '{"nombre":"Ada Lovelace","email":"ada@demo.com"}'`); });
+
+  add(()=>{ st.line=[10,11,12,13,14]; st.p1=["pendiente","wait"]; st.pos=1; st.dir="f"; st.active=[0,1];
+    st.carry="{ }"; st.note="POST · el cuerpo viaja con la petición";
+    say("4 · sale la petición", `Mismo <code>fetch()</code>, pero con un <b>segundo argumento</b>: <code>method</code>, <code>headers</code> y <code>body</code>. La cabecera <code>Content-Type</code> le dice al servidor cómo interpretar ese texto.`);
+    log(`<span class="c-tok">  fetch</span>(URL, { method: <span class="c-post">'POST'</span>, … }) → <span class="c-warn">Promise { pendiente }</span>`); });
+
+  add(()=>{ st.line=[10,14]; st.stack=[]; st.pos=2; st.active=[1,2];
+    say("5 · await pausa", `Exactamente igual que en el GET: <b>await</b> pausa <u>solo esta función</u> y la saca del Call Stack. El hilo queda libre.`);
+    log(`<span class="c-dim">  await → crearUsuario() sale del Call Stack</span>`); });
+
+  add(()=>{ st.pos=3; st.active=[2,3]; st.note="el servidor recibe y valida el cuerpo";
+    say("6 · llega al servidor", `<code>POST /api/usuarios</code> con el cuerpo. El servidor lo valida y lo guarda en su base de datos — este trabajo suele tardar más que un simple GET.`);
+    log(`<span class="c-dim">  → POST /api/usuarios</span>`);
+    log(`<span class="c-dim">    Content-Type: application/json</span>`); });
+
+  if(c==="ok"){
+    add(()=>{ st.dir="b"; st.pos=2; st.active=[2,3]; st.carry=""; st.note="vuelve el registro creado";
+      say("7 · responde 201", `El servidor guardó el usuario y responde <b>201 Created</b>. Un POST correcto devuelve el registro <b>ya creado</b>, con el <code>id</code> que asignó él.`);
+      log(`<span class="c-dim">  ← HTTP 201 Created</span>`); });
+    add(()=>{ st.pos=null; st.p1=["cumplida ✓","ok"]; st.res=["Response { status: 201 }","ok"];
+      st.stack=["crearUsuario()"]; st.line=[10,14]; st.active=[0]; st.note="";
+      say("8 · vuelve el Response", `Continuación → cola de microtareas → Event Loop → Call Stack. Y otra vez el mismo aviso: <code>res</code> es el <code>Response</code>, <b>todavía sin el cuerpo</b>.`);
+      log(`<span class="c-tok">  res</span> = Response { status: <span class="c-ok">201</span> }`);
+      log(`<span class="c-warn">  ⚠ aún no sabes qué id te asignaron</span>`); });
+    add(()=>{ st.line=15; st.p2=["pendiente","wait"]; st.stack=[];
+      say("9 · segunda promesa", `<code>res.json()</code> otra vez. En un POST este paso es el que te trae el <b>id nuevo</b>, así que casi nunca conviene saltárselo.`);
+      log(`<span class="c-tok">  res.json</span>() → <span class="c-warn">Promise { pendiente }</span>`); });
+    add(()=>{ st.line=15; st.p2=["cumplida ✓","ok"]; st.data=["{ id: 11, nombre: 'Ada…' }","ok"];
+      st.stack=["crearUsuario()"]; st.active=[0];
+      say("10 · datos listos", `<code>data</code> ya es un objeto: el usuario creado <b>con su id</b>. Fíjate en que el <code>id</code> no lo pusiste tú, lo puso el servidor.`);
+      log(`<span class="c-tok">  data</span> = <span class="c-ok">${JSON.stringify(CREADO)}</span>`); });
+    add(()=>{ st.line=16; st.screen="ok";
+      say("11 · confirmar", `Se pinta la confirmación con el registro real que devolvió el servidor. Nunca pintes el objeto que enviaste: <b>pinta el que te contestaron</b>.`);
+      log(`<span class="c-ok">  pantalla: usuario creado ✓</span>`); });
+    add(()=>{ st.line=20; st.stack=[]; st.active=[];
+      say("fin", `<b>El flujo es el mismo que en GET.</b> Solo cambian tres cosas: el <code>method</code>, las <code>headers</code> y el <code>body</code> convertido a texto.`);
+      log(`<span class="c-dim">  ✓ crearUsuario() terminó</span>`); });
+  } else {
+    add(()=>{ st.pos=3; st.dir="x"; st.dead=true; st.active=[2]; st.carry=""; st.note="la petición no llega";
+      say("7 · nadie contesta", `Se cae la conexión con el cuerpo en vuelo. <b>Y aquí aparece una duda incómoda:</b> ¿llegó a guardarse el usuario o no? No hay forma de saberlo desde el cliente.`);
+      log(`<span class="c-bad">  ✕ sin respuesta del servidor</span>`); });
+    add(()=>{ st.pos=null; st.p1=["rechazada ✕","bad"]; st.stack=["crearUsuario()"]; st.line=[10,14]; st.bad=true; st.active=[0]; st.note="";
+      say("8 · rechazada", `La Promise se <b>rechaza</b> y el <code>await</code> lanza el error. Igual que en el GET: no hubo <code>Response</code>, así que no hay nada que leer.`);
+      log(`<span class="c-bad">  TypeError: Failed to fetch</span>`); });
+    add(()=>{ st.line=18; st.screen="error"; st.err="TypeError: Failed to fetch"; st.bad=true;
+      say("9 · entra el catch", `El <code>catch</code> recoge el error y desbloquea el formulario para que el usuario pueda reintentar.`);
+      log(`<span class="c-bad">  catch → Failed to fetch</span>`);
+      log(`<span class="c-ok">  pantalla: mensaje de error ✓</span>`); });
+    add(()=>{ st.line=20; st.stack=[]; st.active=[]; st.bad=false; st.dead=false;
+      say("fin", `Por eso un GET se puede reintentar a ciegas y un POST no: repetirlo puede crear el registro <b>dos veces</b>. Ese es el gran matiz entre pedir y crear.`);
+      log(`<span class="c-dim">  ✓ crearUsuario() terminó</span>`); });
+  }
+  return S;
+}
+
+/* ---------- motor ---------- */
+function reset(){
+  clearInterval(timer); timer=null;
+  st=JSON.parse(JSON.stringify(BLANK)); i=0; steps=build(op, caso);
+  paintCode(op);
+  outEl.innerHTML=""; $("#step").disabled=false; $("#auto").textContent="Reproducir todo";
+  say("inicio", op==="get"
+    ? `Pulsa <b>Siguiente paso</b>. Vas a <b>obtener</b> un usuario: <code>fetch()</code> sale del Call Stack, viaja a la red y vuelve en dos entregas.`
+    : `Pulsa <b>Siguiente paso</b>. Vas a <b>crear</b> un usuario: el mismo recorrido, pero esta vez la petición <b>lleva un cuerpo</b> de ida.`);
+  render();
+}
+function next(){
+  if(i>=steps.length) return false;
+  steps[i](); i++; render();
+  if(i>=steps.length){ $("#step").disabled=true; return false; }
+  return true;
+}
+$("#step").addEventListener("click", next);
+$("#reset").addEventListener("click", reset);
+$("#auto").addEventListener("click", ()=>{
+  if(timer){ clearInterval(timer); timer=null; $("#auto").textContent="Reproducir todo"; return; }
+  if(i>=steps.length) reset();
+  $("#auto").textContent="Pausar";
+  timer=setInterval(()=>{ if(!next()){ clearInterval(timer); timer=null; $("#auto").textContent="Reproducir todo"; } }, 2100);
+});
+document.querySelectorAll("[data-op]").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    document.querySelectorAll("[data-op]").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+    op=b.dataset.op; reset();
+  });
+});
+document.querySelectorAll("[data-case]").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    document.querySelectorAll("[data-case]").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+    caso=b.dataset.case; reset();
+  });
+});
+document.addEventListener("keydown", e=>{
+  if(e.code==="Space" || e.key==="ArrowRight"){
+    if(/BUTTON|INPUT/.test(e.target.tagName)) return;
+    e.preventDefault(); next();
+  }
+});
+let clicks=0;
+$("#clicker").addEventListener("click", ()=>{
+  clicks++;
+  $("#clicks").textContent=`${clicks} clic${clicks===1?"":"s"} · la página nunca se congela`;
+});
+
+reset();
+})();
+</script>
+</body>
+</html>
