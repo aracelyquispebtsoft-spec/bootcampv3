@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Git interactivo · TD-1 → TD-5</title>
+<style>
+:root{
+  --bg:#f7f9fc;--panel:#fff;--ink:#172033;--muted:#667085;--line:#d8e2ef;
+  --main:#2563eb;--td1:#0ea5a4;--td2:#8b5cf6;--td3:#f59e0b;--td4:#ec4899;--td5:#64748b;
+  --good:#16a34a;--warn:#f59e0b;--bad:#dc2626;--dark:#101827;--code:#0b1220;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:linear-gradient(#fbfdff,#f3f6fb);color:var(--ink)}
+.app{max-width:1220px;margin:auto;padding:22px}
+.hero{background:#fff;border:1px solid var(--line);border-radius:24px;padding:26px;box-shadow:0 10px 30px rgba(15,23,42,.06)}
+h1,h2,h3,p{margin-top:0}h1{font-size:clamp(30px,4vw,50px);letter-spacing:-1.4px;margin-bottom:8px}h2{font-size:clamp(24px,3vw,34px)}
+.brand{height:36px;width:auto;display:block;margin:0 0 16px}
+h1 .nave{height:.9em;width:auto;vertical-align:-.08em;margin-right:10px}
+.sub{color:var(--muted);font-size:17px;line-height:1.55;max-width:1000px}
+.tags,.nav,.toolbar{display:flex;gap:9px;flex-wrap:wrap}.tag{background:#eef4ff;color:#1d4ed8;padding:7px 11px;border-radius:999px;font-weight:800;font-size:13px}
+.nav{margin:18px 0}.nav button,.btn{border:0;border-radius:12px;padding:11px 14px;font-weight:800;cursor:pointer;background:#e9eef6;color:#334155}
+.nav button.active,.btn.primary{background:var(--dark);color:#fff}.btn.good{background:var(--good);color:#fff}.btn.warn{background:var(--warn);color:#3d2600}.btn.danger{background:var(--bad);color:#fff}.btn:disabled{opacity:.45;cursor:not-allowed}
+.screen{display:none}.screen.active{display:block}.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:19px}.muted{color:var(--muted)}.small{font-size:13px}
+.callout{padding:14px 16px;border-radius:13px;border-left:5px solid #06b6d4;background:#eefcff;line-height:1.5}.goodbox{border-left-color:var(--good);background:#effcf2}.warnbox{border-left-color:var(--warn);background:#fff8e8}.badbox{border-left-color:var(--bad);background:#fff1f2}
+code.i{font:13px ui-monospace,SFMono-Regular,Consolas,monospace;background:#eef2f7;padding:2px 6px;border-radius:7px}
+.graph{border:1px solid var(--line);background:#fbfdff;border-radius:18px;padding:18px;overflow:hidden}
+.branch{display:grid;grid-template-columns:105px 1fr;align-items:center;min-height:76px;gap:10px}.blabel{font-weight:900}.blabel.main{color:var(--main)}
+.track{display:flex;align-items:center;gap:18px;position:relative;min-height:56px;flex-wrap:nowrap}.track:before{content:"";position:absolute;left:18px;right:10px;top:27px;height:4px;background:#cbd5e1;border-radius:4px}
+.commit{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:900;font-size:12px;position:relative;z-index:2;box-shadow:0 5px 12px rgba(0,0,0,.12);flex:0 0 auto}
+.mainc{background:var(--main)}.td1{background:var(--td1)}.td2{background:var(--td2)}.td3{background:var(--td3)}.td4{background:var(--td4)}.td5{background:var(--td5)}
+.dup{outline:5px solid #fecaca;animation:pulse .8s infinite alternate}.new{outline:5px solid #bbf7d0}.selected{outline:5px solid #fde68a;transform:scale(1.06)}
+@keyframes pulse{to{transform:scale(1.07)}}.arrow-note{font-size:12px;color:var(--muted);margin:0 0 8px 115px}
+.terminal{background:var(--code);color:#dbeafe;border-radius:17px;padding:17px;font:14px/1.62 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;min-height:220px}
+.prompt{color:#67e8f9}.ok{color:#86efac}.err{color:#fca5a5}.cmd{color:#fde68a}.purple{color:#c4b5fd}
+.steps{display:grid;gap:9px}.step{padding:12px 14px;border:1px solid var(--line);background:#f7f9fc;border-radius:13px;color:var(--muted)}.step.active{border-color:#fbbf24;background:#fff8e7;color:var(--ink)}.step.done{border-color:#86efac;background:#f0fdf4;color:var(--ink)}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.pill{padding:9px 12px;border-radius:11px;color:#fff;font-weight:800;font-size:13px}.arr{color:#94a3b8;font-size:22px;font-weight:900}
+table{width:100%;border-collapse:collapse;border:1px solid var(--line);background:#fff;border-radius:15px;overflow:hidden}th,td{padding:12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:#f4f7fb}
+.radio{display:grid;gap:10px}.choice{border:1px solid var(--line);background:#fff;border-radius:13px;padding:13px;text-align:left;cursor:pointer;font-weight:750}.choice.correct{border-color:#4ade80;background:#f0fdf4}.choice.wrong{border-color:#fca5a5;background:#fff1f2}
+@media(max-width:850px){.app{padding:13px}.grid,.two{grid-template-columns:1fr}.branch{grid-template-columns:80px 1fr}.track{gap:10px}.commit{width:44px;height:44px;font-size:10px}.track:before{top:22px}.arrow-note{margin-left:0}}
+</style>
+</head>
+<body>
+<main class="app">
+<section class="hero">
+<img class="brand" src="img/logo.png" alt="btsoft — Transformando ideas en codigo">
+<h1><img class="nave" src="img/nave.png" alt="">TD-1 → TD-5: rebase o reset + cherry-pick</h1>
+<p class="sub">
+Caso realista con ramas encadenadas. <b>TD-2 nace desde TD-1</b>, TD-3 desde TD-2, y así sucesivamente.
+TD-1 recibe ajustes antes de entrar a <b>main</b>. Cuando TD-2 se actualiza contra main, todavía arrastra cambios de TD-1.
+</p>
+<div class="tags"><span class="tag">main</span><span class="tag">TD-1…TD-5</span><span class="tag">ramas dependientes</span><span class="tag">rebase</span><span class="tag">reset + cherry-pick</span></div>
+</section>
+
+<nav class="nav">
+<button class="active" data-screen="initial" type="button">1. Cadena inicial</button>
+<button data-screen="merge" type="button">2. TD-1 entra a main</button>
+<button data-screen="problem" type="button">3. Problema en TD-2</button>
+<button data-screen="rebase" type="button">4. Solución: rebase</button>
+<button data-screen="reset" type="button">5. Solución: reset + cherry-pick</button>
+<button data-screen="cascade" type="button">6. TD-3 → TD-5</button>
+<button data-screen="decision" type="button">7. ¿Cuál usar?</button>
+</nav>
+
+<section id="initial" class="screen active">
+<div class="grid">
+<div class="card">
+<h2>1. Las ramas están encadenadas</h2>
+<p>La idea simplificada es esta:</p>
+<div class="graph">
+<div class="branch"><div class="blabel main">main</div><div class="track"><div class="commit mainc">A</div></div></div>
+<div class="arrow-note">TD-1 se crea desde main</div>
+<div class="branch"><div class="blabel" style="color:var(--td1)">TD-1</div><div class="track"><div class="commit mainc">A</div><div class="commit td1">T1</div></div></div>
+<div class="arrow-note">TD-2 se crea desde TD-1</div>
+<div class="branch"><div class="blabel" style="color:var(--td2)">TD-2</div><div class="track"><div class="commit mainc">A</div><div class="commit td1">T1</div><div class="commit td2">T2</div></div></div>
+<div class="arrow-note">y continúa la misma dependencia...</div>
+<div class="branch"><div class="blabel">TD-3…5</div><div class="track"><div class="commit td3">T3</div><div class="commit td4">T4</div><div class="commit td5">T5</div></div></div>
+</div>
+</div>
+<div class="card">
+<h2>¿Qué significa “apunta a la anterior”?</h2>
+<p>TD-2 no parte directamente de main. Su historial incluye lo que ya existía en TD-1.</p>
+<div class="callout">
+<b>TD-2 contiene:</b><br><br>
+1. el punto base A<br>
+2. el commit de TD-1: <b>T1</b><br>
+3. su propio commit: <b>T2</b>
+</div>
+<p style="margin-top:14px">Eso está bien mientras TD-1 todavía no haya sido integrado o modificado en main.</p>
+</div>
+</div>
+</section>
+
+<section id="merge" class="screen">
+<div class="grid">
+<div class="card">
+<h2>2. Se solicitan cambios en TD-1</h2>
+<p>Antes de hacer merge, TD-1 recibe ajustes. Representaremos la versión final como <b>T1'</b>.</p>
+<div class="graph">
+<div class="branch"><div class="blabel" style="color:var(--td1)">TD-1 antes</div><div class="track"><div class="commit mainc">A</div><div class="commit td1">T1</div></div></div>
+<div class="branch"><div class="blabel" style="color:var(--td1)">TD-1 final</div><div class="track"><div class="commit mainc">A</div><div class="commit td1 new">T1'</div></div></div>
+<div class="branch"><div class="blabel main">main</div><div class="track"><div class="commit mainc">A</div><div class="commit mainc new">T1′</div></div></div>
+</div>
+<div class="callout goodbox" style="margin-top:14px">
+TD-1 entra a main <b>sin conflicto</b>. Desde este momento, <b>main ya contiene T1′</b>, que es la versión actualizada de TD-1.
+</div>
+</div>
+<div class="card">
+<h2>Pero TD-2 ya existía</h2>
+<p>TD-2 fue creada antes de esos ajustes y conserva su historia original:</p>
+<div class="flow">
+<span class="pill" style="background:var(--main)">A</span><span class="arr">→</span>
+<span class="pill" style="background:var(--td1)">T1 antiguo</span><span class="arr">→</span>
+<span class="pill" style="background:var(--td2)">T2 propio</span>
+</div>
+<div class="callout warnbox" style="margin-top:20px">
+Al cambiar el target de TD-2 a <b>main</b>, TD-2 todavía conserva <b>T1</b> en su historial, aunque <b>main ya contiene T1′</b>. Por eso en el PR pueden seguir apareciendo cambios que realmente pertenecían a TD-1.
+</div>
+<p class="small muted" style="margin-top:13px">
+Esto es especialmente visible cuando TD-1 fue reescrita, squash-mergeada o sus commits finales ya no son exactamente los mismos hashes que conserva TD-2.
+</p>
+</div>
+</div>
+</section>
+
+<section id="problem" class="screen">
+<div class="grid">
+<div class="card">
+<h2>3. Qué ves en TD-2</h2>
+<div class="graph">
+<div class="branch"><div class="blabel main">main</div><div class="track"><div class="commit mainc">A</div><div class="commit mainc">T1′</div></div></div>
+<div class="branch"><div class="blabel" style="color:var(--td2)">TD-2</div><div class="track"><div class="commit mainc">A</div><div class="commit td1 dup">T1</div><div class="commit td2">T2</div></div></div>
+</div>
+<div class="callout badbox" style="margin-top:14px">
+<b>T1 es el problema:</b> pertenece conceptualmente a TD-1, pero sigue apareciendo en el historial de TD-2.
+</div>
+</div>
+<div class="card">
+<h2>Objetivo</h2>
+<p>Queremos que TD-2 quede conceptualmente así:</p>
+<div class="flow">
+<span class="pill" style="background:var(--main)">A</span><span class="arr">→</span>
+<span class="pill" style="background:var(--main)">T1′ / TD-1 integrado</span><span class="arr">→</span>
+<span class="pill" style="background:var(--td2)">T2</span>
+</div>
+<div class="callout" style="margin-top:18px">
+Es decir: <b>main actualizado + solamente los cambios propios de TD-2.</b>
+</div>
+<p style="margin-top:14px">Tienes dos estrategias comunes:</p>
+<p>♻️ <b>Rebase TD-2 sobre main</b></p>
+<p>🍒 <b>Resetear TD-2 a main y cherry-pickear sus commits propios</b></p>
+</div>
+</div>
+</section>
+
+<section id="rebase" class="screen">
+<div class="grid">
+<div class="card">
+<h2>4. Solución A: rebase con main</h2>
+<p>Git intenta volver a aplicar los commits de TD-2 encima del main actual.</p>
+<div class="graph">
+<div class="branch"><div class="blabel main">main</div><div class="track"><div class="commit mainc">A</div><div class="commit mainc">T1′</div></div></div>
+<div class="branch"><div class="blabel" style="color:var(--td2)">TD-2</div><div class="track" id="rb-track"><div class="commit td1">T1</div><div class="commit td2">T2</div></div></div>
+</div>
+<div class="toolbar" style="margin-top:14px"><button class="btn primary" id="rb-next" type="button">Siguiente paso</button><button class="btn" id="rb-reset" type="button">Reiniciar</button></div>
+</div>
+<div class="card">
+<h3>Simulación</h3>
+<div class="steps">
+<div class="step" data-rb="0">1. fetch: traemos el estado nuevo de origin/main.</div>
+<div class="step" data-rb="1">2. rebase toma los commits de TD-2.</div>
+<div class="step" data-rb="2">3. Git intenta reaplicar el T1 antiguo sobre main, pero main ya contiene T1′. Si los cambios no son equivalentes, el rebase se detiene con un conflicto.</div>
+<div class="step" data-rb="3">4. Resolvemos T1: en el archivo dejamos la versión correcta T1′ que ya está en main, eliminamos los marcadores de conflicto, ejecutamos git add &lt;archivo&gt; y luego git rebase --continue. Así evitamos volver a introducir el T1 antiguo.</div>
+<div class="step" data-rb="4">5. Después Git continúa con el commit propio de TD-2. T2 se reaplica sobre T1′ y pasa a ser T2′.</div>
+</div>
+<div class="terminal" id="rb-term" style="margin-top:14px"><span class="prompt">$</span> git fetch origin
+<span class="prompt">$</span> git switch TD-2
+<span class="prompt">$</span> git rebase origin/main</div>
+</div>
+</div>
+<div class="callout warnbox" style="margin-top:18px">
+Si el rebase se detiene en T1: abre el archivo en conflicto, conserva los cambios correctos que corresponden a <b>T1′ de main</b>, elimina los marcadores <code class="i">&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code class="i">=======</code> y <code class="i">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>, luego ejecuta <code class="i">git add archivo</code> y <code class="i">git rebase --continue</code>.
+Para cancelar: <code class="i">git rebase --abort</code>.
+</div>
+</section>
+
+<section id="reset" class="screen">
+<div class="two">
+<div class="card">
+<h2>5. Solución B: reset + cherry-pick</h2>
+<p>Esta opción es muy clara cuando puedes identificar exactamente qué commits son <b>propios de TD-2</b>.</p>
+<div class="callout goodbox">
+Primero guarda el hash de T2 o crea una rama backup. Luego haces que TD-2 sea idéntica a main y finalmente vuelves a aplicar T2.
+</div>
+<div class="toolbar" style="margin-top:14px"><button class="btn primary" id="cp-next" type="button">Siguiente paso</button><button class="btn" id="cp-reset" type="button">Reiniciar</button></div>
+<div class="graph" style="margin-top:14px">
+<div class="branch"><div class="blabel main">main</div><div class="track"><div class="commit mainc">A</div><div class="commit mainc">T1′</div></div></div>
+<div class="branch"><div class="blabel" style="color:var(--td2)">TD-2</div><div class="track" id="cp-track"><div class="commit td1 dup">T1</div><div class="commit td2 selected">T2</div></div></div>
+</div>
+</div>
+<div class="card">
+<h3>Comandos</h3>
+<div class="terminal" id="cp-term"><span class="prompt">$</span> git fetch origin
+<span class="prompt">$</span> git switch TD-2
+
+# seguridad
+<span class="prompt">$</span> git branch backup/TD-2
+
+# guardar el hash propio de TD-2
+<span class="prompt">$</span> git log --oneline
+
+Pulsa “Siguiente paso”...</div>
+<div class="callout warnbox" style="margin-top:14px">
+<b>Importante:</b> <code class="i">reset --hard</code> elimina del working tree los cambios no guardados. Haz commit/stash o backup antes.
+</div>
+</div>
+</div>
+</section>
+
+<section id="cascade" class="screen">
+<div class="grid">
+<div class="card">
+<h2>6. TD-3, TD-4 y TD-5 con cherry-pick</h2>
+<p>Después de dejar <b>TD-2 limpia</b>, las ramas siguientes todavía pueden conservar la historia antigua. Si cada una tiene un commit propio fácil de identificar, podemos repetir la misma estrategia.</p>
+
+<div class="graph">
+<div class="branch"><div class="blabel main">main</div><div class="track"><div class="commit mainc">A</div><div class="commit mainc">T1′</div></div></div>
+<div class="branch"><div class="blabel" style="color:var(--td2)">TD-2</div><div class="track"><div class="commit mainc">T1′</div><div class="commit td2 new">T2′</div></div></div>
+<div class="branch"><div class="blabel" style="color:var(--td3)">TD-3</div><div class="track" id="cascade-td3"><div class="commit td1 dup">T1</div><div class="commit td2 dup">T2</div><div class="commit td3 selected">T3</div></div></div>
+<div class="branch"><div class="blabel" style="color:var(--td4)">TD-4</div><div class="track" id="cascade-td4"><div class="commit td3">T3</div><div class="commit td4 selected">T4</div></div></div>
+<div class="branch"><div class="blabel" style="color:var(--td5)">TD-5</div><div class="track" id="cascade-td5"><div class="commit td4">T4</div><div class="commit td5 selected">T5</div></div></div>
+</div>
+
+<div class="callout warnbox" style="margin-top:14px">
+La idea es siempre la misma: <b>resetear la rama sobre su padre ya corregido y recuperar únicamente su commit propio con cherry-pick.</b>
+</div>
+</div>
+
+<div class="card">
+<h3>Simulación paso a paso</h3>
+<div class="steps">
+<div class="step" data-cascade="0">1. TD-3: partir de TD-2 corregida y recuperar T3.</div>
+<div class="step" data-cascade="1">2. TD-4: partir de TD-3 corregida y recuperar T4.</div>
+<div class="step" data-cascade="2">3. TD-5: partir de TD-4 corregida y recuperar T5.</div>
+<div class="step" data-cascade="3">4. Cadena final completamente actualizada.</div>
+</div>
+
+<div class="toolbar" style="margin-top:14px">
+<button class="btn primary" id="cascade-next" type="button">Siguiente rama</button>
+<button class="btn" id="cascade-reset" type="button">Reiniciar</button>
+</div>
+
+<div class="terminal" id="cascade-term" style="margin-top:14px"><span class="prompt">$</span> Empezamos por TD-3...
+
+Pulsa “Siguiente rama”.</div>
+</div>
+</div>
+
+<div class="two" style="margin-top:18px">
+<div class="card">
+<h3>TD-3</h3>
+<div class="terminal"><span class="prompt">$</span> git fetch origin
+<span class="prompt">$</span> git switch TD-3
+<span class="prompt">$</span> git branch backup/TD-3
+
+<span class="cmd"># ahora TD-3 parte de TD-2 corregida</span>
+<span class="prompt">$</span> git reset --hard origin/TD-2
+
+<span class="cmd"># recuperamos solo su cambio propio</span>
+<span class="prompt">$</span> git cherry-pick &lt;hash-T3&gt;
+
+<span class="prompt">$</span> git push --force-with-lease origin TD-3</div>
+</div>
+
+<div class="card">
+<h3>TD-4 y TD-5</h3>
+<div class="terminal"><span class="cmd"># TD-4</span>
+<span class="prompt">$</span> git switch TD-4
+<span class="prompt">$</span> git branch backup/TD-4
+<span class="prompt">$</span> git reset --hard origin/TD-3
+<span class="prompt">$</span> git cherry-pick &lt;hash-T4&gt;
+<span class="prompt">$</span> git push --force-with-lease origin TD-4
+
+<span class="cmd"># TD-5</span>
+<span class="prompt">$</span> git switch TD-5
+<span class="prompt">$</span> git branch backup/TD-5
+<span class="prompt">$</span> git reset --hard origin/TD-4
+<span class="prompt">$</span> git cherry-pick &lt;hash-T5&gt;
+<span class="prompt">$</span> git push --force-with-lease origin TD-5</div>
+</div>
+</div>
+
+<div class="callout goodbox" style="margin-top:18px">
+<b>Resultado final:</b><br>
+main: A → T1′<br>
+TD-2: A → T1′ → T2′<br>
+TD-3: A → T1′ → T2′ → T3′<br>
+TD-4: A → T1′ → T2′ → T3′ → T4′<br>
+TD-5: A → T1′ → T2′ → T3′ → T4′ → T5′
+</div>
+
+<div class="callout warnbox" style="margin-top:14px">
+Si una rama tiene <b>varios commits propios</b>, debes cherry-pickear todos esos commits en orden, no solamente uno.
+</div>
+</section>
+
+<section id="decision" class="screen">
+<h2>7. ¿Rebase o reset + cherry-pick?</h2>
+<div class="two">
+<div class="card">
+<h3>♻️ Rebase</h3>
+<p><b>Mejor cuando:</b> TD-2 tiene varios commits propios y quieres conservarlos como una secuencia.</p>
+<p><b>Ventaja:</b> Git reaplica tu trabajo sobre main automáticamente.</p>
+<p><b>Riesgo:</b> si T1 y T1′ son versiones diferentes del mismo cambio, puedes tener que resolver conflictos.</p>
+<div class="terminal"><span class="prompt">$</span> git fetch origin
+<span class="prompt">$</span> git switch TD-2
+<span class="prompt">$</span> git rebase origin/main
+<span class="prompt">$</span> git push --force-with-lease origin TD-2</div>
+</div>
+<div class="card">
+<h3>🍒 Reset + cherry-pick</h3>
+<p><b>Mejor cuando:</b> sabes con claridad que TD-2 tiene 1 o pocos commits propios y quieres eliminar completamente la historia heredada de TD-1.</p>
+<p><b>Ventaja:</b> el resultado es muy explícito: main + únicamente T2.</p>
+<p><b>Riesgo:</b> debes identificar correctamente todos los commits propios antes del reset.</p>
+<div class="terminal"><span class="prompt">$</span> git branch backup/TD-2
+<span class="prompt">$</span> git reset --hard origin/main
+<span class="prompt">$</span> git cherry-pick &lt;hash-T2&gt;
+<span class="prompt">$</span> git push --force-with-lease origin TD-2</div>
+</div>
+</div>
+<table style="margin-top:18px">
+<thead><tr><th>Situación</th><th>Recomendación</th></tr></thead>
+<tbody>
+<tr><td>TD-2 tiene varios commits propios</td><td>Rebase suele ser más cómodo</td></tr>
+<tr><td>TD-2 tiene un único commit propio fácil de identificar</td><td>Reset + cherry-pick es muy claro</td></tr>
+<tr><td>La rama ya fue publicada en GitHub</td><td>Después de reescribir historia: <code class="i">push --force-with-lease</code></td></tr>
+<tr><td>TD-3…TD-5 dependen de TD-2</td><td>Actualizarlas en orden después de arreglar TD-2</td></tr>
+</tbody>
+</table>
+
+<div class="card" style="margin-top:18px">
+<h3>Mini reto</h3>
+<p>TD-2 solo tiene <b>un commit propio T2</b>. T1 es heredado de TD-1 y main ya contiene la versión final de TD-1. ¿Cuál es la estrategia más explícita para dejar TD-2 limpia?</p>
+<div class="radio">
+<button class="choice" data-answer="wrong" type="button">A) Hacer cherry-pick de main completo</button>
+<button class="choice" data-answer="correct" type="button">B) Crear backup → reset --hard origin/main → cherry-pick T2</button>
+<button class="choice" data-answer="wrong" type="button">C) Hacer reset --hard sin guardar el hash de T2</button>
+</div>
+<div id="quiz-result" class="callout" style="margin-top:14px">Selecciona una opción.</div>
+</div>
+</section>
+</main>
+
+<script>
+(() => {
+  const root=document.querySelector('.app');
+  const nav=[...root.querySelectorAll('.nav button')];
+  const screens=[...root.querySelectorAll('.screen')];
+  nav.forEach(b=>b.addEventListener('click',()=>{
+    const id=b.dataset.screen;
+    screens.forEach(s=>s.classList.toggle('active',s.id===id));
+    nav.forEach(x=>x.classList.toggle('active',x===b));
+  }));
+
+  let rb=-1;
+  const rbSteps=[...root.querySelectorAll('[data-rb]')];
+  const rbTrack=root.querySelector('#rb-track');
+  const rbTerm=root.querySelector('#rb-term');
+  const rbNext=root.querySelector('#rb-next');
+  function renderRb(){
+    rbSteps.forEach((s,i)=>{s.classList.toggle('done',i<rb);s.classList.toggle('active',i===rb)});
+    const states=[
+      '<div class="commit td1">T1</div><div class="commit td2">T2</div>',
+      '<div class="commit td1 selected">T1</div><div class="commit td2 selected">T2</div>',
+      '<div class="commit mainc">T1′</div><div class="commit td1 dup">T1?</div><div class="commit td2">T2</div>',
+      '<div class="commit mainc">T1′</div><div class="commit td2">T2</div>',
+      '<div class="commit mainc">T1′</div><div class="commit td2 new">T2′</div>'
+    ];
+    if(rb>=0) rbTrack.innerHTML=states[rb];
+    const msg=[
+      '<span class="ok">origin/main actualizado.</span>\n\nmain ahora contiene: A → T1′',
+      '<span class="cmd">Git toma los commits que existen en TD-2 y no están en main.</span>\n\nCommits a revisar:\n  T1  ← heredado de TD-1\n  T2  ← cambio propio de TD-2',
+      '<span class="err">CONFLICT al intentar reaplicar T1.</span>\n\nmain ya tiene la versión actualizada T1′.\nTD-2 todavía intenta aplicar el T1 antiguo.',
+      '<span class="cmd"># Resolver el archivo manteniendo T1′</span>\n<span class="prompt">$</span> git add &lt;archivo-en-conflicto&gt;\n<span class="prompt">$</span> git rebase --continue\n\n<span class="ok">T1 antiguo ya no se vuelve a introducir.</span>',
+      '<span class="ok">Applying: T2 → T2′</span>\n\n<span class="ok">Successfully rebased TD-2.</span>\n\nHistorial final:\n  A → T1′ → T2′'
+    ];
+    rbTerm.innerHTML='<span class="prompt">$</span> git fetch origin\n<span class="prompt">$</span> git switch TD-2\n<span class="prompt">$</span> git rebase origin/main\n\n'+(rb>=0?msg[rb]:'');
+    rbNext.disabled=rb>=4; rbNext.textContent=rb>=4?'Finalizado':'Siguiente paso';
+  }
+  rbNext.addEventListener('click',()=>{if(rb<4){rb++;renderRb()}});
+  root.querySelector('#rb-reset').addEventListener('click',()=>{rb=-1;rbTrack.innerHTML='<div class="commit td1">T1</div><div class="commit td2">T2</div>';rbSteps.forEach(s=>s.className='step');rbTerm.innerHTML='<span class="prompt">$</span> git fetch origin\n<span class="prompt">$</span> git switch TD-2\n<span class="prompt">$</span> git rebase origin/main';rbNext.disabled=false;rbNext.textContent='Siguiente paso'});
+
+  let cp=-1;
+  const cpTrack=root.querySelector('#cp-track'),cpTerm=root.querySelector('#cp-term'),cpNext=root.querySelector('#cp-next');
+  const cpStates=[
+    '<div class="commit td1 dup">T1</div><div class="commit td2 selected">T2</div>',
+    '<div class="commit mainc">A</div><div class="commit mainc">T1′</div>',
+    '<div class="commit mainc">A</div><div class="commit mainc">T1′</div><div class="commit td2 new">T2′</div>'
+  ];
+  const cpMsgs=[
+    '<span class="prompt">$</span> git branch backup/TD-2\n<span class="prompt">$</span> git log --oneline\n\n<span class="cmd">Guardamos el hash de T2: e7b93ab</span>',
+    '<span class="prompt">$</span> git reset --hard origin/main\n\n<span class="ok">TD-2 ahora es idéntica a main: A → T1′</span>',
+    '<span class="prompt">$</span> git cherry-pick e7b93ab\n\n<span class="ok">TD-2 limpia: A → T1′ → T2′</span>'
+  ];
+  cpNext.addEventListener('click',()=>{if(cp<2){cp++;cpTrack.innerHTML=cpStates[cp];cpTerm.innerHTML=cpMsgs[cp];cpNext.disabled=cp>=2;cpNext.textContent=cp>=2?'Finalizado':'Siguiente paso'}});
+  root.querySelector('#cp-reset').addEventListener('click',()=>{cp=-1;cpTrack.innerHTML=cpStates[0];cpTerm.innerHTML='<span class="prompt">$</span> git fetch origin\n<span class="prompt">$</span> git switch TD-2\n\n# seguridad\n<span class="prompt">$</span> git branch backup/TD-2\n\n# guardar el hash propio de TD-2\n<span class="prompt">$</span> git log --oneline\n\nPulsa “Siguiente paso”...';cpNext.disabled=false;cpNext.textContent='Siguiente paso'});
+
+
+  let cascadeIndex=-1;
+  const cascadeSteps=[...root.querySelectorAll('[data-cascade]')];
+  const cascadeNext=root.querySelector('#cascade-next');
+  const cascadeReset=root.querySelector('#cascade-reset');
+  const cascadeTerm=root.querySelector('#cascade-term');
+  const cascadeTd3=root.querySelector('#cascade-td3');
+  const cascadeTd4=root.querySelector('#cascade-td4');
+  const cascadeTd5=root.querySelector('#cascade-td5');
+
+  const cascadeMessages=[
+    '<span class="cmd"># TD-3</span>\n<span class="prompt">$</span> git reset --hard origin/TD-2\n<span class="prompt">$</span> git cherry-pick &lt;hash-T3&gt;\n\n<span class="ok">TD-3: T1′ → T2′ → T3′</span>',
+    '<span class="cmd"># TD-4</span>\n<span class="prompt">$</span> git reset --hard origin/TD-3\n<span class="prompt">$</span> git cherry-pick &lt;hash-T4&gt;\n\n<span class="ok">TD-4: T1′ → T2′ → T3′ → T4′</span>',
+    '<span class="cmd"># TD-5</span>\n<span class="prompt">$</span> git reset --hard origin/TD-4\n<span class="prompt">$</span> git cherry-pick &lt;hash-T5&gt;\n\n<span class="ok">TD-5: T1′ → T2′ → T3′ → T4′ → T5′</span>',
+    '<span class="ok">Cadena corregida.</span>\n\nmain  : A → T1′\nTD-2  : A → T1′ → T2′\nTD-3  : A → T1′ → T2′ → T3′\nTD-4  : A → T1′ → T2′ → T3′ → T4′\nTD-5  : A → T1′ → T2′ → T3′ → T4′ → T5′'
+  ];
+
+  function renderCascade(){
+    cascadeSteps.forEach((s,i)=>{
+      s.classList.toggle('done',i<cascadeIndex);
+      s.classList.toggle('active',i===cascadeIndex);
+    });
+
+    cascadeTerm.innerHTML=cascadeMessages[cascadeIndex];
+
+    if(cascadeIndex>=0){
+      cascadeTd3.innerHTML='<div class="commit mainc">T1′</div><div class="commit td2">T2′</div><div class="commit td3 new">T3′</div>';
+    }
+    if(cascadeIndex>=1){
+      cascadeTd4.innerHTML='<div class="commit td2">T2′</div><div class="commit td3">T3′</div><div class="commit td4 new">T4′</div>';
+    }
+    if(cascadeIndex>=2){
+      cascadeTd5.innerHTML='<div class="commit td3">T3′</div><div class="commit td4">T4′</div><div class="commit td5 new">T5′</div>';
+    }
+
+    cascadeNext.disabled=cascadeIndex>=3;
+    cascadeNext.textContent=cascadeIndex>=3?'Finalizado':'Siguiente rama';
+  }
+
+  cascadeNext.addEventListener('click',()=>{
+    if(cascadeIndex<3){
+      cascadeIndex++;
+      renderCascade();
+    }
+  });
+
+  cascadeReset.addEventListener('click',()=>{
+    cascadeIndex=-1;
+    cascadeSteps.forEach(s=>s.className='step');
+    cascadeTerm.innerHTML='<span class="prompt">$</span> Empezamos por TD-3...\n\nPulsa “Siguiente rama”.';
+    cascadeTd3.innerHTML='<div class="commit td1 dup">T1</div><div class="commit td2 dup">T2</div><div class="commit td3 selected">T3</div>';
+    cascadeTd4.innerHTML='<div class="commit td3">T3</div><div class="commit td4 selected">T4</div>';
+    cascadeTd5.innerHTML='<div class="commit td4">T4</div><div class="commit td5 selected">T5</div>';
+    cascadeNext.disabled=false;
+    cascadeNext.textContent='Siguiente rama';
+  });
+
+  const choices=[...root.querySelectorAll('.choice')],result=root.querySelector('#quiz-result');
+  choices.forEach(c=>c.addEventListener('click',()=>{
+    choices.forEach(x=>x.classList.remove('correct','wrong'));
+    if(c.dataset.answer==='correct'){c.classList.add('correct');result.className='callout goodbox';result.innerHTML='<b>Correcto.</b> Si T2 es el único cambio propio, esta estrategia deja la rama exactamente como main + T2 y elimina la historia heredada de TD-1.'}
+    else{c.classList.add('wrong');result.className='callout badbox';result.innerHTML='<b>No es la opción más segura.</b> Antes de resetear debes preservar/identificar el trabajo propio de TD-2.'}
+  }));
+})();
+</script>
+</body>
+</html>
