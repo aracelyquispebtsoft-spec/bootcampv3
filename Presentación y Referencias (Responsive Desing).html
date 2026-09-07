@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Responsive Design con CSS — Presentación interactiva</title>
+<style>
+:root{
+  --bg:#07111d;
+  --surface:#0d1b2a;
+  --surface-2:#12263a;
+  --surface-3:#173149;
+  --text:#ecf6ff;
+  --muted:#a7bbcd;
+  --line:#29465f;
+  --accent:#38bdf8;
+  --accent-2:#a78bfa;
+  --good:#34d399;
+  --warn:#fbbf24;
+  --bad:#fb7185;
+  --code:#03101a;
+  --shadow:0 24px 70px rgba(0,0,0,.32);
+  --radius:22px;
+}
+body.light{
+  --bg:#f3f8fc;--surface:#fff;--surface-2:#edf6fc;--surface-3:#e4f0f9;
+  --text:#0c1b2a;--muted:#52687a;--line:#caddea;--accent:#0284c7;--accent-2:#7c3aed;
+  --good:#059669;--warn:#a16207;--bad:#e11d48;--code:#071624;--shadow:0 22px 60px rgba(15,60,90,.12)
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at 12% 8%,rgba(56,189,248,.11),transparent 28%),
+    radial-gradient(circle at 88% 28%,rgba(167,139,250,.09),transparent 26%),var(--bg);
+  overflow-x:hidden
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+a{color:var(--accent)}
+code{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}
+:focus-visible{outline:3px solid var(--warn);outline-offset:3px}
+.progress{position:fixed;z-index:100;inset:0 0 auto;height:5px;background:rgba(255,255,255,.05)}
+.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .15s}
+.toolbar{
+  position:fixed;z-index:95;top:14px;right:16px;display:flex;gap:7px;padding:7px;border:1px solid var(--line);
+  border-radius:15px;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(15px);box-shadow:var(--shadow)
+}
+.icon-btn,.btn,.choice,.tab,.preset{
+  border:1px solid var(--line);background:var(--surface-2);color:var(--text);border-radius:11px;padding:9px 12px
+}
+.icon-btn{min-width:42px}
+.btn.primary{background:linear-gradient(135deg,var(--accent),#67e8f9);color:#03131d;border:0;font-weight:850}
+.btn:hover,.icon-btn:hover,.choice:hover,.tab:hover,.preset:hover{transform:translateY(-1px);border-color:var(--accent)}
+.sidebar{
+  position:fixed;z-index:85;left:16px;top:50%;transform:translateY(-50%);width:224px;padding:10px;border:1px solid var(--line);
+  border-radius:18px;background:color-mix(in srgb,var(--surface) 93%,transparent);backdrop-filter:blur(15px);box-shadow:var(--shadow)
+}
+.sidebar h4{margin:5px 9px 10px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-size:.7rem}
+.sidebar a{display:flex;align-items:center;gap:9px;padding:8px 10px;margin:2px 0;border-radius:10px;color:var(--muted);text-decoration:none;font-size:.83rem}
+.sidebar a b{width:22px;height:22px;border-radius:7px;background:var(--surface-2);display:grid;place-items:center;font-size:.7rem}
+.sidebar a:hover,.sidebar a.active{color:var(--text);background:var(--surface-2)}
+.sidebar a.active b{background:var(--accent);color:#04131e}
+main{margin-left:252px}
+.slide{
+  min-height:100vh;padding:82px clamp(25px,5vw,80px) 54px;display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,.035)
+}
+.inner{width:min(1180px,100%);margin:auto}
+.eyebrow{
+  display:inline-flex;gap:8px;align-items:center;padding:7px 11px;border:1px solid var(--line);background:var(--surface);
+  border-radius:999px;color:var(--accent);font-size:.77rem;font-weight:850;text-transform:uppercase;letter-spacing:.06em
+}
+h1{font-size:clamp(2.8rem,7vw,6.5rem);letter-spacing:-.06em;line-height:.92;margin:.18em 0 .24em}
+h2{font-size:clamp(2.05rem,4.5vw,4rem);letter-spacing:-.045em;line-height:1;margin:.18em 0 .35em}
+h3{margin:.2em 0 .55em}
+p{line-height:1.66}
+.lead{max-width:870px;font-size:clamp(1.05rem,1.8vw,1.3rem);color:var(--muted)}
+.gradient{background:linear-gradient(90deg,var(--accent),#67e8f9,var(--accent-2));background-clip:text;-webkit-background-clip:text;color:transparent}
+.hero{display:grid;grid-template-columns:1.35fr .65fr;gap:26px;align-items:center}
+.panel,.card,.demo{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--surface) 94%,white 4%),var(--surface));
+  border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)
+}
+.panel,.card{padding:20px}.demo{padding:18px;margin-top:18px}
+.topic-list{display:grid;gap:9px}
+.topic{border:1px solid var(--line);background:var(--surface-2);border-radius:13px;padding:11px 13px;display:flex;gap:10px;align-items:center}
+.topic b{color:var(--accent)}
+.chips,.actions,.control-row{display:flex;gap:8px;flex-wrap:wrap}
+.chips{margin-top:19px}.actions{margin-top:24px}
+.chip{padding:7px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:.8rem}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.callout{border-left:4px solid var(--accent);background:var(--surface-2);padding:12px 14px;border-radius:0 13px 13px 0;color:var(--muted)}
+.callout b{color:var(--text)}
+pre{
+  margin:12px 0;padding:15px;border:1px solid #17384e;border-radius:15px;background:var(--code);color:#d8f3ff;
+  line-height:1.55;overflow:auto;font-size:.84rem
+}
+.kw{color:#f9a8d4}.prop{color:#7dd3fc}.val{color:#fde68a}.sel{color:#86efac}.com{color:#8198aa}
+.demo-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.demo-title{font-weight:850}.small{font-size:.83rem;color:var(--muted)}
+.choice.active,.tab.active,.preset.active{background:var(--accent);border-color:transparent;color:#03121d;font-weight:850}
+.speaker{margin-top:14px;border:1px dashed var(--line);border-radius:14px;overflow:hidden}
+.speaker summary{cursor:pointer;padding:10px 13px;color:var(--muted);font-weight:750}
+.speaker div{padding:0 13px 13px;color:var(--muted);line-height:1.6}
+
+/* Mobile First */
+.device-shell{background:var(--surface-2);padding:14px;border:1px solid var(--line);border-radius:18px;overflow:auto}
+.device{margin:auto;background:#f8fafc;color:#0f172a;border-radius:14px;overflow:hidden;transition:width .3s;box-shadow:0 12px 32px rgba(0,0,0,.24)}
+.device-bar{height:28px;background:#dbe5ed;padding:0 9px;display:flex;align-items:center;gap:5px}
+.dot{width:8px;height:8px;border-radius:50%;background:#94a3b8}
+.device-content{padding:15px}
+.fake-nav{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #cbd5e1;padding-bottom:9px}
+.fake-links{display:none;gap:12px;font-size:.75rem}.fake-menu{display:block}
+.fake-title{font-size:1.5rem;font-weight:900;line-height:1.05;margin:18px 0 12px}
+.fake-grid{display:grid;grid-template-columns:1fr;gap:8px}
+.fake-card{padding:13px;border-radius:10px;background:#e0f2fe;font-weight:750}
+.device.tablet .fake-links,.device.desktop .fake-links{display:flex}.device.tablet .fake-menu,.device.desktop .fake-menu{display:none}
+.device.tablet .fake-grid{grid-template-columns:1fr 1fr}.device.desktop .fake-grid{grid-template-columns:repeat(3,1fr)}
+.device.tablet .fake-title{font-size:2rem}.device.desktop .fake-title{font-size:2.4rem}
+
+/* Flex */
+.flex-lab{min-height:260px;border:1px dashed var(--line);background:var(--surface-2);border-radius:16px;padding:13px;display:flex;gap:10px;transition:.2s}
+.flex-item{min-width:72px;min-height:65px;border-radius:12px;background:color-mix(in srgb,var(--accent) 16%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 55%,var(--line));display:grid;place-items:center;font-weight:900}
+label.control{display:grid;gap:5px;font-size:.8rem;color:var(--muted)}
+select{padding:8px 10px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);color:var(--text)}
+
+/* Grid */
+.grid-stage{border:1px dashed var(--line);background:var(--surface-2);border-radius:16px;padding:13px;display:grid;gap:10px;min-height:240px}
+.grid-item{background:color-mix(in srgb,var(--accent-2) 17%,var(--surface));border:1px solid color-mix(in srgb,var(--accent-2) 50%,var(--line));border-radius:11px;padding:15px;font-weight:800}
+.grid-resizer{resize:horizontal;overflow:auto;min-width:260px;width:100%;max-width:100%;border-right:5px solid var(--accent);padding-right:5px}
+
+/* media */
+.mq-screen{margin:auto;background:#fff;color:#0f172a;border:4px solid #334155;border-radius:16px;overflow:hidden;min-height:270px;transition:width .12s;max-width:100%}
+.mq-head{background:#0f172a;color:#fff;padding:11px 13px;display:flex;justify-content:space-between}
+.mq-body{padding:15px}.mq-layout{display:grid;grid-template-columns:1fr;gap:10px}.mq-box{background:#e2e8f0;border-radius:10px;padding:14px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+
+/* Units */
+.unit-stage{height:230px;border:1px dashed var(--line);background:var(--surface-2);border-radius:16px;padding:14px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.unit-box{display:grid;place-items:center;text-align:center;background:linear-gradient(135deg,rgba(56,189,248,.19),rgba(167,139,250,.2));border:1px solid var(--accent);border-radius:14px;transition:.2s}
+.unit-table{width:100%;border-collapse:collapse}.unit-table td,.unit-table th{border-bottom:1px solid var(--line);padding:8px;text-align:left;font-size:.85rem}.unit-table th{color:var(--muted)}
+
+/* Images */
+.image-frame{height:255px;border-radius:16px;border:1px solid var(--line);overflow:hidden;background:#081722;position:relative}
+.sample-img{width:100%;height:100%;display:block;object-fit:cover;transition:.25s}
+.img-art{position:absolute;inset:0;background:
+  radial-gradient(circle at 72% 25%,#fff7 0 4%,transparent 5%),
+  linear-gradient(160deg,transparent 0 40%,#16a34a 41% 56%,#14532d 57% 100%),
+  linear-gradient(#38bdf8 0 54%,#bae6fd 55% 100%)}
+.img-mountain{position:absolute;left:10%;right:8%;bottom:12%;height:46%;clip-path:polygon(0 100%,28% 28%,45% 64%,63% 8%,100% 100%);background:#334155}
+.img-label{position:absolute;left:12px;bottom:12px;background:#0f172acc;color:#fff;padding:7px 9px;border-radius:9px;font-size:.8rem}
+
+/* Containers */
+.outer-resize{resize:horizontal;overflow:auto;width:70%;min-width:250px;max-width:100%;border-right:5px solid var(--accent);padding-right:5px}
+.container-demo{container-type:inline-size;border:1px dashed var(--line);background:var(--surface-2);padding:12px;border-radius:16px}
+.cq-card{display:flex;flex-direction:column;border-radius:14px;overflow:hidden;background:#fff;color:#0f172a;border:1px solid #cbd5e1}
+.cq-image{height:110px;background:linear-gradient(135deg,#bae6fd,#ddd6fe);display:grid;place-items:center;font-size:2rem}
+.cq-body{padding:13px}.cq-body p{color:#475569;margin-bottom:0}
+@container (min-width:520px){.cq-card{display:grid;grid-template-columns:180px 1fr}.cq-image{height:auto;min-height:170px}}
+
+/* Clean code */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.badbox,.goodbox{border-radius:16px;padding:14px;border:1px solid var(--line)}
+.badbox{background:rgba(251,113,133,.08)}.goodbox{background:rgba(52,211,153,.08)}
+.badbox h3{color:var(--bad)}.goodbox h3{color:var(--good)}
+.checklist{display:grid;gap:9px}.check{display:flex;gap:10px;padding:11px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2)}
+.check input{accent-color:var(--good);transform:scale(1.15)}
+.scorebar{height:10px;border-radius:999px;background:var(--surface-2);overflow:hidden}.scorebar span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--good),var(--accent));transition:.2s}
+
+/* Quiz & refs */
+.quiz{padding:15px;border-radius:16px;border:1px solid var(--line);background:var(--surface-2);margin-bottom:10px}
+.quiz p{font-weight:800;margin-top:0}.feedback{font-size:.85rem;color:var(--muted);margin-top:8px}
+.choice.correct{border-color:var(--good);background:rgba(52,211,153,.13)}.choice.wrong{border-color:var(--bad);background:rgba(251,113,133,.13)}
+.refs{display:grid;gap:10px}.ref{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:14px;border:1px solid var(--line);border-radius:15px;background:var(--surface)}
+.ref-num{width:34px;height:34px;border-radius:10px;background:var(--surface-2);color:var(--accent);font-weight:900;display:grid;place-items:center}
+.ref a{text-decoration:none;font-weight:850}.ref p{margin:4px 0 0;color:var(--muted);font-size:.83rem}
+.ref-topic{padding:6px 9px;border:1px solid var(--line);border-radius:999px;font-size:.75rem;color:var(--muted);text-align:center}
+.ref-table{width:100%;border-collapse:collapse;margin-top:18px}.ref-table th,.ref-table td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}.ref-table th{color:var(--muted)}
+.footer-hint{position:fixed;z-index:80;right:16px;bottom:12px;background:color-mix(in srgb,var(--surface) 92%,transparent);color:var(--muted);border:1px solid var(--line);padding:7px 9px;border-radius:9px;font-size:.72rem}
+.toast{position:fixed;z-index:200;bottom:24px;left:50%;transform:translate(-50%,15px);opacity:0;background:var(--text);color:var(--bg);padding:9px 13px;border-radius:10px;font-weight:850;transition:.2s;pointer-events:none}.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media(max-width:1000px){.sidebar{display:none}main{margin-left:0}.hero,.grid2{grid-template-columns:1fr}.grid3{grid-template-columns:1fr 1fr}.footer-hint{display:none}}
+@media(max-width:650px){.slide{padding:76px 17px 42px}.grid3,.compare{grid-template-columns:1fr}.toolbar{top:9px;right:9px}.ref{grid-template-columns:auto 1fr}.ref-topic{display:none}.outer-resize{width:100%}}
+@media print{.sidebar,.toolbar,.progress,.footer-hint{display:none!important}main{margin:0}.slide{min-height:auto;page-break-after:always;padding:28px}body{background:#fff;color:#111}}
+</style>
+</head>
+<body>
+<div class="progress"><span id="progress"></span></div>
+<div class="toolbar">
+  <button class="icon-btn" id="theme" title="Tema claro/oscuro">☀️</button>
+  <button class="icon-btn" id="fullscreen" title="Pantalla completa">⛶</button>
+  <button class="icon-btn" id="print" title="Imprimir / PDF">🖨</button>
+</div>
+
+<nav class="sidebar" aria-label="Secciones">
+  <h4>Responsive CSS</h4>
+  <a class="active" href="#inicio"><b>0</b>Inicio</a>
+  <a href="#mobile"><b>1</b>Mobile First</a>
+  <a href="#flex"><b>2</b>Flexbox</a>
+  <a href="#grid"><b>3</b>CSS Grid</a>
+  <a href="#media"><b>4</b>Media Queries</a>
+  <a href="#units"><b>5</b>Unidades relativas</a>
+  <a href="#images"><b>6</b>Imágenes</a>
+  <a href="#containers"><b>7</b>Container Queries</a>
+  <a href="#clean"><b>✓</b>Código limpio</a>
+  <a href="#quiz"><b>Q</b>Quiz</a>
+  <a href="#refs"><b>R</b>Referencias</a>
+</nav>
+
+<main>
+<section class="slide" id="inicio"><div class="inner">
+  <div class="hero">
+    <div>
+      <span class="eyebrow">CSS · Responsive Design · Clase interactiva</span>
+      <h1>Diseñar para el <span class="gradient">espacio disponible</span></h1>
+      <p class="lead">Responsividad no significa “hacer todo más pequeño”. Significa permitir que contenido, layout, texto e imágenes se adapten de forma comprensible a distintos espacios.</p>
+      <div class="actions">
+        <button class="btn primary" onclick="go('mobile')">Comenzar →</button>
+        <button class="btn" onclick="go('refs')">Ver bibliografía</button>
+      </div>
+      <div class="chips"><span class="chip">7 conceptos</span><span class="chip">CSS puro</span><span class="chip">Código limpio</span><span class="chip">Demos</span><span class="chip">Quiz</span></div>
+    </div>
+    <div class="panel topic-list">
+      <div class="topic"><b>01</b> Mobile First</div><div class="topic"><b>02</b> Flexbox</div>
+      <div class="topic"><b>03</b> CSS Grid</div><div class="topic"><b>04</b> Media Queries</div>
+      <div class="topic"><b>05</b> Unidades relativas</div><div class="topic"><b>06</b> Imágenes responsivas</div>
+      <div class="topic"><b>07</b> Container Queries</div>
+    </div>
+  </div>
+  <details class="speaker"><summary>🗣 Pregunta para iniciar la clase</summary><div>“Si una página se ve bien a 375px y a 1440px, ¿significa que ya es responsiva?” La respuesta es: no necesariamente. También debemos revisar todo lo que ocurre entre esos tamaños.</div></details>
+</div></section>
+
+<section class="slide" id="mobile"><div class="inner">
+  <span class="eyebrow">01 · Estrategia</span><h2>Mobile First</h2>
+  <p class="lead">Escribe primero una base simple para espacios pequeños. Después agrega mejoras a medida que aparece espacio suficiente.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>CSS base → mejoras progresivas</h3>
+      <pre><code><span class="sel">.cards</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>: <span class="val">1fr</span>;
+}
+
+<span class="kw">@media</span> (<span class="prop">min-width</span>: <span class="val">48rem</span>) {
+  <span class="sel">.cards</span> {
+    <span class="prop">grid-template-columns</span>: <span class="val">repeat(2, 1fr)</span>;
+  }
+}</code></pre>
+      <div class="callout"><b>Idea:</b> el CSS sin media query ya debe funcionar. La media query mejora el diseño; no debería “rescatarlo”.</div>
+    </div>
+    <div class="device-shell">
+      <div class="demo-head"><div class="demo-title">Mismo contenido, distinto espacio</div>
+        <div class="control-row"><button class="preset active" data-device="mobile">📱</button><button class="preset" data-device="tablet">▣</button><button class="preset" data-device="desktop">🖥</button></div>
+      </div>
+      <div class="device mobile" id="device" style="width:320px">
+        <div class="device-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+        <div class="device-content"><div class="fake-nav"><b>Academia</b><div class="fake-links">Inicio · Cursos · Ayuda</div><div class="fake-menu">☰</div></div>
+        <div class="fake-title">Aprende CSS responsivo</div><div class="fake-grid"><div class="fake-card">HTML</div><div class="fake-card">CSS</div><div class="fake-card">JS</div></div></div>
+      </div>
+    </div>
+  </div>
+  <details class="speaker"><summary>✓ Buenas prácticas</summary><div>Empieza por el flujo natural del documento, evita fijar dimensiones demasiado pronto y agrega breakpoints solo cuando el contenido necesite reorganizarse.</div></details>
+</div></section>
+
+<section class="slide" id="flex"><div class="inner">
+  <span class="eyebrow">02 · Layout unidimensional</span><h2>Flexbox</h2>
+  <p class="lead">Flexbox organiza elementos principalmente en una fila o una columna y distribuye el espacio de forma flexible.</p>
+  <div class="grid2">
+    <div class="demo">
+      <div class="demo-head"><div class="demo-title">Laboratorio Flexbox</div><span class="chip">Prueba los controles</span></div>
+      <div class="control-row">
+        <label class="control">direction<select id="fd"><option>row</option><option>column</option></select></label>
+        <label class="control">justify-content<select id="jc"><option>flex-start</option><option>center</option><option>space-between</option><option>space-around</option></select></label>
+        <label class="control">align-items<select id="ai"><option>stretch</option><option>center</option><option>flex-start</option><option>flex-end</option></select></label>
+        <label class="control">wrap<select id="fw"><option>nowrap</option><option>wrap</option></select></label>
+      </div>
+      <div class="flex-lab" id="flexLab"><div class="flex-item">1</div><div class="flex-item">2</div><div class="flex-item">3</div><div class="flex-item">4</div></div>
+    </div>
+    <div class="card">
+      <pre><code><span class="sel">.actions</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">flex-wrap</span>: <span class="val">wrap</span>;
+  <span class="prop">gap</span>: <span class="val">0.75rem</span>;
+}</code></pre>
+      <h3>Consejos</h3>
+      <p>✓ Usa <code>gap</code> para separar hijos.<br>✓ Usa <code>flex-wrap</code> si pueden saltar de línea.<br>✓ Aprovecha <code>flex-grow</code> y <code>flex-shrink</code> antes de fijar anchos.</p>
+      <div class="callout"><b>Evita:</b> construir layouts normales con <code>position:absolute</code>. Sácalo del flujo solo cuando realmente necesites superposición.</div>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" id="grid"><div class="inner">
+  <span class="eyebrow">03 · Layout bidimensional</span><h2>CSS Grid</h2>
+  <p class="lead">Grid es excelente para dashboards, tarjetas, galerías y layouts donde filas y columnas importan al mismo tiempo.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>Grid adaptable sin muchos breakpoints</h3>
+      <pre><code><span class="sel">.grid</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>:
+    <span class="val">repeat(auto-fit, minmax(14rem, 1fr))</span>;
+  <span class="prop">gap</span>: <span class="val">1rem</span>;
+}</code></pre>
+      <p>Con <code>auto-fit</code> + <code>minmax()</code>, el navegador decide cuántas columnas caben sin obligarnos a crear un breakpoint para cada cambio.</p>
+    </div>
+    <div class="demo">
+      <div class="demo-head"><div class="demo-title">Arrastra el borde derecho ↔</div><span class="small">Observa las columnas</span></div>
+      <div class="grid-resizer" id="gridResize"><div class="grid-stage" id="gridStage">
+        <div class="grid-item">Card 1</div><div class="grid-item">Card 2</div><div class="grid-item">Card 3</div><div class="grid-item">Card 4</div><div class="grid-item">Card 5</div>
+      </div></div>
+    </div>
+  </div>
+  <details class="speaker"><summary>✓ ¿Flex o Grid?</summary><div>Regla didáctica: Flexbox suele resolver mejor una dirección; Grid suele ser más natural cuando necesitas controlar filas y columnas. No es una ley: pueden combinarse.</div></details>
+</div></section>
+
+<section class="slide" id="media"><div class="inner">
+  <span class="eyebrow">04 · Cambios por viewport</span><h2>Media Queries</h2>
+  <p class="lead">Una media query aplica CSS cuando se cumple una condición. En responsive design, una de las condiciones más comunes es el ancho del viewport.</p>
+  <div class="demo">
+    <div class="demo-head"><div><div class="demo-title">Simulador de ancho</div><div class="small">Mueve el control. El layout cambia cuando el contenido lo necesita.</div></div><span class="chip"><b id="mqWidth">375</b> px</span></div>
+    <input id="mqRange" type="range" min="320" max="1280" value="375">
+    <div class="chips" id="mqStatus"></div>
+    <div class="mq-screen" id="mqScreen" style="width:375px"><div class="mq-head"><b>Dashboard</b><span id="mqNav">☰</span></div><div class="mq-body"><div class="mq-layout" id="mqLayout"><div class="mq-box">Usuarios</div><div class="mq-box">Cursos</div><div class="mq-box">Ventas</div></div></div></div>
+  </div>
+  <div class="grid3" style="margin-top:15px">
+    <div class="card"><b>✓ Pocos breakpoints</b><p>No hace falta tener una media query por cada dispositivo.</p></div>
+    <div class="card"><b>✓ Solo lo que cambia</b><p>No repitas dentro de la media query propiedades que ya son correctas.</p></div>
+    <div class="card"><b>✓ Prueba entre puntos</b><p>Un bug puede aparecer a 690px aunque 640px y 768px se vean bien.</p></div>
+  </div>
+</div></section>
+
+<section class="slide" id="units"><div class="inner">
+  <span class="eyebrow">05 · Escala flexible</span><h2>Unidades relativas</h2>
+  <p class="lead">Las unidades relativas ayudan a que texto, espacios y cajas respondan a su contexto en lugar de depender siempre de un número fijo de píxeles.</p>
+  <div class="grid2">
+    <div class="demo">
+      <div class="demo-head"><div class="demo-title">Explorador de unidades</div></div>
+      <div class="control-row">
+        <button class="tab active" data-unit="percent">%</button><button class="tab" data-unit="rem">rem</button><button class="tab" data-unit="em">em</button>
+        <button class="tab" data-unit="vw">vw</button><button class="tab" data-unit="vh">vh</button><button class="tab" data-unit="clamp">clamp()</button>
+      </div>
+      <div class="unit-stage"><div class="unit-box" id="unitBox" style="width:70%;height:110px"><b id="unitTitle">70%</b><span class="small" id="unitDesc">Relativo al ancho del contenedor.</span></div></div>
+    </div>
+    <div class="card">
+      <table class="unit-table"><tr><th>Unidad / función</th><th>Útil para</th></tr>
+        <tr><td><code>%</code></td><td>Anchos relativos al contenedor</td></tr><tr><td><code>rem</code></td><td>Tipografía y espaciado consistente</td></tr>
+        <tr><td><code>em</code></td><td>Escala relativa al contexto tipográfico</td></tr><tr><td><code>vw/vh</code></td><td>Dimensiones relacionadas al viewport</td></tr>
+        <tr><td><code>min()/max()</code></td><td>Elegir límites dinámicos</td></tr><tr><td><code>clamp()</code></td><td>Mínimo + valor fluido + máximo</td></tr>
+      </table>
+      <pre><code><span class="sel">.title</span> {
+  <span class="prop">font-size</span>: <span class="val">clamp(2rem, 5vw, 4rem)</span>;
+}
+
+<span class="sel">.container</span> {
+  <span class="prop">width</span>: <span class="val">min(90%, 75rem)</span>;
+}</code></pre>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" id="images"><div class="inner">
+  <span class="eyebrow">06 · Multimedia</span><h2>Imágenes responsivas</h2>
+  <p class="lead">Una imagen debe respetar el espacio disponible, mantener su proporción cuando corresponde y no obligar al layout a desbordarse.</p>
+  <div class="grid2">
+    <div class="demo">
+      <div class="demo-head"><div class="demo-title">object-fit</div><div class="control-row"><button class="tab active" data-fit="cover">cover</button><button class="tab" data-fit="contain">contain</button></div></div>
+      <div class="image-frame"><div class="sample-img" id="sampleImg"><div class="img-art"></div><div class="img-mountain"></div><div class="img-label" id="fitLabel">object-fit: cover</div></div></div>
+    </div>
+    <div class="card">
+      <pre><code><span class="sel">img</span> {
+  <span class="prop">max-width</span>: <span class="val">100%</span>;
+  <span class="prop">height</span>: <span class="val">auto</span>;
+  <span class="prop">display</span>: <span class="val">block</span>;
+}
+
+<span class="sel">.card-image</span> {
+  <span class="prop">width</span>: <span class="val">100%</span>;
+  <span class="prop">aspect-ratio</span>: <span class="val">16 / 9</span>;
+  <span class="prop">object-fit</span>: <span class="val">cover</span>;
+}</code></pre>
+      <p>Para rendimiento y diferentes resoluciones, HTML también ofrece <code>srcset</code>, <code>sizes</code> y <code>&lt;picture&gt;</code>.</p>
+      <div class="callout"><b>Consejo:</b> no descargues una imagen enorme para mostrarla como miniatura en móvil si puedes ofrecer una versión más adecuada.</div>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" id="containers"><div class="inner">
+  <span class="eyebrow">07 · Componentes modernos</span><h2>Container Queries</h2>
+  <p class="lead">Las media queries preguntan por el viewport. Las container queries permiten que un componente responda al espacio de su contenedor.</p>
+  <div class="grid2">
+    <div class="demo">
+      <div class="demo-head"><div class="demo-title">Arrastra el borde derecho ↔</div><span class="small">La Card decide su layout</span></div>
+      <div class="outer-resize">
+        <div class="container-demo">
+          <article class="cq-card"><div class="cq-image">🧩</div><div class="cq-body"><h3>Componente reutilizable</h3><p>Puede vivir en un sidebar estrecho o en una zona principal ancha.</p></div></article>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <pre><code><span class="sel">.card-container</span> {
+  <span class="prop">container-type</span>: <span class="val">inline-size</span>;
+}
+
+<span class="sel">.card</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">flex-direction</span>: <span class="val">column</span>;
+}
+
+<span class="kw">@container</span> (<span class="prop">min-width</span>: <span class="val">520px</span>) {
+  <span class="sel">.card</span> {
+    <span class="prop">display</span>: <span class="val">grid</span>;
+    <span class="prop">grid-template-columns</span>: <span class="val">180px 1fr</span>;
+  }
+}</code></pre>
+      <div class="callout"><b>Pregunta clave:</b><br><code>@media</code> → “¿cuánto mide la pantalla?”<br><code>@container</code> → “¿cuánto espacio tiene este componente?”</div>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" id="clean"><div class="inner">
+  <span class="eyebrow">Código limpio · Responsive</span><h2>Que responda bien y también se pueda mantener</h2>
+  <p class="lead">El código responsive se vuelve difícil de mantener cuando acumula números mágicos, media queries duplicadas, selectores muy específicos y excepciones.</p>
+  <div class="compare">
+    <div class="badbox"><h3>✗ Difícil de mantener</h3><pre><code><span class="sel">.card</span> {
+  <span class="prop">width</span>: <span class="val">437px</span>;
+  <span class="prop">margin-left</span>: <span class="val">27px</span>;
+  <span class="prop">padding</span>: <span class="val">19px</span>;
+}
+
+<span class="kw">@media</span> (<span class="prop">min-width</span>: <span class="val">783px</span>) {
+  <span class="sel">.card</span> {
+    <span class="prop">width</span>: <span class="val">640px</span>;
+  }
+}</code></pre></div>
+    <div class="goodbox"><h3>✓ Más flexible</h3><pre><code><span class="sel">:root</span> {
+  <span class="prop">--space-md</span>: <span class="val">1rem</span>;
+  <span class="prop">--card-max</span>: <span class="val">30rem</span>;
+}
+
+<span class="sel">.card</span> {
+  <span class="prop">width</span>: <span class="val">100%</span>;
+  <span class="prop">max-width</span>: <span class="val">var(--card-max)</span>;
+  <span class="prop">padding</span>: <span class="val">var(--space-md)</span>;
+}</code></pre></div>
+  </div>
+  <div class="grid2" style="margin-top:15px">
+    <div class="checklist" id="checks">
+      <label class="check"><input type="checkbox"> Evitar valores mágicos innecesarios</label>
+      <label class="check"><input type="checkbox"> Usar nombres de clase comprensibles</label>
+      <label class="check"><input type="checkbox"> Reutilizar Custom Properties / variables CSS</label>
+      <label class="check"><input type="checkbox"> No repetir reglas que ya funcionan</label>
+      <label class="check"><input type="checkbox"> Mantener selectores simples</label>
+      <label class="check"><input type="checkbox"> Probar overflow y tamaños intermedios</label>
+    </div>
+    <div class="card">
+      <h3>Checklist de calidad</h3><div style="font-size:3.5rem;font-weight:950" id="cleanPct">0%</div><div class="scorebar"><span id="cleanBar"></span></div>
+      <p id="cleanMsg">Marca las prácticas que aplicarías.</p>
+      <div class="callout"><b>Regla útil:</b> primero intenta resolver el problema con el flujo natural, Flex/Grid y unidades flexibles; agrega media queries después.</div>
+    </div>
+  </div>
+</div></section>
+
+<section class="slide" id="quiz"><div class="inner">
+  <span class="eyebrow">Repaso</span><h2>Quiz rápido</h2><p class="lead">Una comprobación breve de las ideas más importantes.</p>
+  <div class="quiz" data-answer="b"><p>1. ¿Qué significa Mobile First?</p><div class="control-row"><button class="choice" data-choice="a">Crear dos sitios</button><button class="choice" data-choice="b">Base para espacios pequeños y mejoras progresivas</button><button class="choice" data-choice="c">Usar solo 375px</button></div><div class="feedback"></div></div>
+  <div class="quiz" data-answer="a"><p>2. ¿Qué layout suele ser natural para tarjetas en filas y columnas?</p><div class="control-row"><button class="choice" data-choice="a">Grid</button><button class="choice" data-choice="b">position:absolute</button><button class="choice" data-choice="c">float</button></div><div class="feedback"></div></div>
+  <div class="quiz" data-answer="c"><p>3. ¿Qué es mejor como regla general?</p><div class="control-row"><button class="choice" data-choice="a">Muchos px fijos</button><button class="choice" data-choice="b">Una media query por teléfono</button><button class="choice" data-choice="c">Layouts fluidos + breakpoints cuando hagan falta</button></div><div class="feedback"></div></div>
+  <div class="quiz" data-answer="b"><p>4. ¿Cuál responde al tamaño de un contenedor?</p><div class="control-row"><button class="choice" data-choice="a">@media</button><button class="choice" data-choice="b">@container</button><button class="choice" data-choice="c">@supports</button></div><div class="feedback"></div></div>
+  <div class="quiz" data-answer="c"><p>5. ¿Cómo validar mejor un diseño responsive?</p><div class="control-row"><button class="choice" data-choice="a">Solo móvil</button><button class="choice" data-choice="b">Solo desktop</button><button class="choice" data-choice="c">Tamaños objetivo y también intermedios</button></div><div class="feedback"></div></div>
+  <div class="card"><b>Resultado: <span id="quizScore">0</span>/5</b><p id="quizMsg">Responde para ver tu puntuación.</p></div>
+</div></section>
+
+<section class="slide" id="refs"><div class="inner">
+  <span class="eyebrow">Bibliografía</span><h2>Referencias por tema</h2>
+  <p class="lead">Todas las referencias principales son de MDN Web Docs y están disponibles en español. Cada una indica qué parte de la presentación ayuda a profundizar.</p>
+  <div class="refs">
+    <div class="ref"><div class="ref-num">1</div><div><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Core/CSS_layout/Responsive_Design" target="_blank" rel="noopener">MDN — Diseño receptivo</a><p>Visión general del diseño adaptable y uso de layouts flexibles.</p></div><div class="ref-topic">Mobile First · Responsive</div></div>
+    <div class="ref"><div class="ref-num">2</div><div><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Core/CSS_layout/Flexbox" target="_blank" rel="noopener">MDN — Flexbox</a><p>Filas, columnas, alineación, crecimiento, reducción y distribución.</p></div><div class="ref-topic">Flexbox</div></div>
+    <div class="ref"><div class="ref-num">3</div><div><a href="https://developer.mozilla.org/es/docs/Web/CSS/Guides/Grid_layout" target="_blank" rel="noopener">MDN — CSS Grid Layout</a><p>Filas, columnas y construcción de layouts bidimensionales.</p></div><div class="ref-topic">CSS Grid</div></div>
+    <div class="ref"><div class="ref-num">4</div><div><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Core/CSS_layout/Media_queries" target="_blank" rel="noopener">MDN — Fundamentos de Media Queries</a><p>Sintaxis y aplicación de CSS según condiciones del viewport.</p></div><div class="ref-topic">Media Queries</div></div>
+    <div class="ref"><div class="ref-num">5</div><div><a href="https://developer.mozilla.org/es/docs/Learn_web_development/Core/Styling_basics/Values_and_units" target="_blank" rel="noopener">MDN — Valores y unidades CSS</a><p>Porcentajes, rem, em, vw, vh y otras unidades relativas.</p></div><div class="ref-topic">Unidades relativas</div></div>
+    <div class="ref"><div class="ref-num">6</div><div><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/clamp" target="_blank" rel="noopener">MDN — clamp()</a><p>Cómo limitar un valor fluido entre un mínimo y un máximo.</p></div><div class="ref-topic">clamp()</div></div>
+    <div class="ref"><div class="ref-num">7</div><div><a href="https://developer.mozilla.org/es/docs/Web/HTML/Guides/Responsive_images" target="_blank" rel="noopener">MDN — Imágenes adaptables</a><p>Responsive images, srcset y &lt;picture&gt; para diferentes tamaños y resoluciones.</p></div><div class="ref-topic">Imágenes responsivas</div></div>
+    <div class="ref"><div class="ref-num">8</div><div><a href="https://developer.mozilla.org/es/docs/Web/CSS/Guides/Containment/Container_queries" target="_blank" rel="noopener">MDN — CSS Container Queries</a><p>Componentes que reaccionan al tamaño de su contenedor.</p></div><div class="ref-topic">Container Queries</div></div>
+    <div class="ref"><div class="ref-num">9</div><div><a href="https://developer.mozilla.org/es/docs/Web/CSS/Guides/Cascading_variables/Using_custom_properties" target="_blank" rel="noopener">MDN — Custom Properties / Variables CSS</a><p>Reutilizar valores, reducir repetición y usar nombres semánticos.</p></div><div class="ref-topic">Código limpio</div></div>
+    <div class="ref"><div class="ref-num">10</div><div><a href="https://developer.mozilla.org/es/docs/MDN/Writing_guidelines/Code_style_guide/CSS" target="_blank" rel="noopener">MDN — Directrices para código CSS</a><p>Planificación del CSS, evitar redundancias y preferir unidades flexibles cuando corresponda.</p></div><div class="ref-topic">Buenas prácticas · Código limpio</div></div>
+  </div>
+
+  <table class="ref-table">
+    <thead><tr><th>Tema de estudio</th><th>Fuente recomendada</th></tr></thead>
+    <tbody>
+      <tr><td>Mobile First / Responsive Design</td><td>MDN — Diseño receptivo</td></tr>
+      <tr><td>Flexbox</td><td>MDN — Flexbox</td></tr>
+      <tr><td>CSS Grid</td><td>MDN — CSS Grid Layout</td></tr>
+      <tr><td>Media Queries</td><td>MDN — Fundamentos de Media Queries</td></tr>
+      <tr><td>%, rem, em, vw, vh</td><td>MDN — Valores y unidades CSS</td></tr>
+      <tr><td>min(), max(), clamp()</td><td>MDN — Valores y unidades / clamp()</td></tr>
+      <tr><td>Imágenes responsivas</td><td>MDN — Imágenes adaptables</td></tr>
+      <tr><td>Container Queries</td><td>MDN — CSS Container Queries</td></tr>
+      <tr><td>Reutilización / variables</td><td>MDN — Custom Properties</td></tr>
+      <tr><td>Código limpio CSS</td><td>MDN — Directrices para código CSS</td></tr>
+    </tbody>
+  </table>
+  <div class="actions"><button class="btn primary" id="copyRefs">Copiar referencias</button><button class="btn" onclick="go('inicio')">Volver al inicio ↑</button></div>
+  <details class="speaker"><summary>🗣 Idea para cerrar la presentación</summary><div>“Responsive design no es coleccionar media queries. Es diseñar sistemas flexibles que necesiten la menor cantidad posible de excepciones.”</div></details>
+</div></section>
+</main>
+
+<div class="footer-hint">← → navegar · F pantalla completa · T tema</div>
+<div class="toast" id="toast">Copiado</div>
+
+<script>
+const slides=[...document.querySelectorAll('.slide')], links=[...document.querySelectorAll('.sidebar a')];
+const prog=document.getElementById('progress');
+function go(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'})}
+function active(){
+  const max=document.documentElement.scrollHeight-innerHeight;
+  prog.style.width=(max?scrollY/max*100:0)+'%';
+  let id=slides[0].id, marker=innerHeight*.45;
+  for(const s of slides){const r=s.getBoundingClientRect();if(r.top<=marker&&r.bottom>=marker) id=s.id}
+  links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+id));
+}
+addEventListener('scroll',active,{passive:true});addEventListener('resize',active);active();
+
+document.getElementById('theme').onclick=()=>{document.body.classList.toggle('light');document.getElementById('theme').textContent=document.body.classList.contains('light')?'🌙':'☀️'};
+document.getElementById('fullscreen').onclick=async()=>{if(!document.fullscreenElement)await document.documentElement.requestFullscreen?.();else await document.exitFullscreen?.()};
+document.getElementById('print').onclick=()=>print();
+
+addEventListener('keydown',e=>{
+  if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;
+  const i=slides.findIndex(s=>{const r=s.getBoundingClientRect();return r.top<=innerHeight*.5&&r.bottom>=innerHeight*.5});
+  if(e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();slides[Math.min(slides.length-1,i+1)]?.scrollIntoView({behavior:'smooth'})}
+  if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();slides[Math.max(0,i-1)]?.scrollIntoView({behavior:'smooth'})}
+  if(e.key.toLowerCase()==='f')document.getElementById('fullscreen').click();
+  if(e.key.toLowerCase()==='t')document.getElementById('theme').click();
+});
+
+// Mobile demo
+const device=document.getElementById('device');
+document.querySelectorAll('[data-device]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-device]').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  const d=b.dataset.device;device.className='device '+d;device.style.width=d==='mobile'?'320px':d==='tablet'?'560px':'760px';
+});
+
+// Flex lab
+const flexLab=document.getElementById('flexLab'), fd=document.getElementById('fd'),jc=document.getElementById('jc'),ai=document.getElementById('ai'),fw=document.getElementById('fw');
+function updateFlex(){flexLab.style.flexDirection=fd.value;flexLab.style.justifyContent=jc.value;flexLab.style.alignItems=ai.value;flexLab.style.flexWrap=fw.value}
+[fd,jc,ai,fw].forEach(x=>x.addEventListener('change',updateFlex));updateFlex();
+
+// Grid auto fit (JS only mirrors the CSS demo so it is guaranteed visible in the presentation)
+const gridResize=document.getElementById('gridResize'),gridStage=document.getElementById('gridStage');
+function updateGrid(){
+  const w=gridResize.clientWidth;
+  const cols=Math.max(1,Math.floor((w+10)/230));
+  gridStage.style.gridTemplateColumns=`repeat(${cols}, minmax(0,1fr))`;
+}
+new ResizeObserver(updateGrid).observe(gridResize);updateGrid();
+
+// Media queries demo
+const mqRange=document.getElementById('mqRange'),mqWidth=document.getElementById('mqWidth'),mqScreen=document.getElementById('mqScreen'),mqLayout=document.getElementById('mqLayout'),mqNav=document.getElementById('mqNav'),mqStatus=document.getElementById('mqStatus');
+function updateMQ(){
+  const w=+mqRange.value;mqWidth.textContent=w;mqScreen.style.width=Math.min(w,900)+'px';
+  mqLayout.style.gridTemplateColumns=w>=1024?'repeat(3,1fr)':w>=768?'repeat(2,1fr)':'1fr';
+  mqNav.textContent=w>=768?'Inicio  Cursos  Contacto':'☰';
+  const tags=[`<span class="chip">base móvil ✓</span>`];
+  if(w>=768)tags.push('<span class="chip">min-width: 768px ✓</span>');
+  if(w>=1024)tags.push('<span class="chip">min-width: 1024px ✓</span>');
+  if(w>640&&w<768)tags.push('<span class="chip">tamaño intermedio: revisar contenido</span>');
+  mqStatus.innerHTML=tags.join('');
+}
+mqRange.addEventListener('input',updateMQ);updateMQ();
+
+// Units
+const unitBox=document.getElementById('unitBox'),unitTitle=document.getElementById('unitTitle'),unitDesc=document.getElementById('unitDesc');
+const units={
+ percent:['70%','Relativo al ancho del contenedor.','70%','110px'],
+ rem:['18rem','Relativo al tamaño de fuente raíz.','18rem','7rem'],
+ em:['16em','Relativo al contexto tipográfico.','16em','7em'],
+ vw:['35vw','Relativo al ancho del viewport.','min(35vw, 360px)','110px'],
+ vh:['18vh','Relativo a la altura del viewport.','260px','min(18vh, 150px)'],
+ clamp:['clamp()','Limita un valor fluido entre mínimo y máximo.','clamp(190px, 40vw, 380px)','clamp(80px, 12vw, 135px)']
+};
+document.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-unit]').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  const u=units[b.dataset.unit];unitTitle.textContent=u[0];unitDesc.textContent=u[1];unitBox.style.width=u[2];unitBox.style.height=u[3];
+});
+
+// Image demo: simulate cover/contain with background-size
+const sampleImg=document.getElementById('sampleImg'),fitLabel=document.getElementById('fitLabel');
+document.querySelectorAll('[data-fit]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-fit]').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  const fit=b.dataset.fit; fitLabel.textContent='object-fit: '+fit;
+  sampleImg.style.transform=fit==='contain'?'scale(.72)':'scale(1)';
+  sampleImg.style.borderRadius=fit==='contain'?'14px':'0';
+});
+
+// Clean code checklist
+const checks=[...document.querySelectorAll('#checks input')];
+const cleanPct=document.getElementById('cleanPct');
+const cleanBar=document.getElementById('cleanBar');
+const cleanMsg=document.getElementById('cleanMsg');
+function updateClean(){
+  const n=checks.filter(c=>c.checked).length,p=Math.round(n/checks.length*100);
+  cleanPct.textContent=p+'%';cleanBar.style.width=p+'%';
+  cleanMsg.textContent=p===100?'Excelente: código flexible y con menos excepciones.':p>=50?'Buen avance. Revisa qué reglas todavía pueden simplificarse.':'Empieza por eliminar duplicación y valores rígidos.';
+}
+checks.forEach(c=>c.addEventListener('change',updateClean));updateClean();
+
+// Quiz
+const answered=new Map(), quizzes=[...document.querySelectorAll('.quiz')];
+const quizScore=document.getElementById('quizScore');
+const quizMsg=document.getElementById('quizMsg');
+quizzes.forEach((q,i)=>q.querySelectorAll('.choice').forEach(btn=>btn.onclick=()=>{
+  if(answered.has(i))return;
+  const ok=btn.dataset.choice===q.dataset.answer;answered.set(i,ok);btn.classList.add(ok?'correct':'wrong');
+  if(!ok)q.querySelector(`[data-choice="${q.dataset.answer}"]`).classList.add('correct');
+  q.querySelector('.feedback').textContent=ok?'✓ Correcto':'Revisa la respuesta marcada en verde.';
+  const score=[...answered.values()].filter(Boolean).length;quizScore.textContent=score;
+  quizMsg.textContent=answered.size<5?`${answered.size}/5 respondidas.`:score===5?'Excelente. Ideas principales dominadas.':score>=4?'Muy bien. Solo falta repasar un concepto.':'Conviene repasar las demos antes de terminar.';
+}));
+
+// Refs
+document.getElementById('copyRefs').onclick=async()=>{
+  const text=[...document.querySelectorAll('.ref')].map(r=>{
+    const a=r.querySelector('a'),topic=r.querySelector('.ref-topic')?.textContent||'';
+    return `${topic} — ${a.textContent}: ${a.href}`;
+  }).join('\n');
+  try{await navigator.clipboard.writeText(text);showToast('Referencias copiadas')}catch{showToast('No se pudo copiar automáticamente')}
+};
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+</script>
+</body>
+</html>
