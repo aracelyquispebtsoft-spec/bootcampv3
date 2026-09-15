@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Guía interactiva de Sequelize para estudiantes con conocimientos de SQL." />
+  <title>Guía interactiva de Sequelize — SQL ↔ Sequelize</title>
+  <style>
+    :root {
+      --bg: #eef4ff;
+      --panel: #ffffff;
+      --panel-2: #f3f7ff;
+      --text: #1f2a44;
+      --muted: #5f6f8d;
+      --border: #cad8f2;
+
+      --accent: #5b5bd6;
+      --accent-soft: #ececff;
+
+      --success: #168a63;
+      --success-soft: #e3f7ef;
+
+      --warn: #b76b00;
+      --warn-soft: #fff1cf;
+
+      --info: #1479b8;
+      --info-soft: #e4f4ff;
+
+      --pink: #c84f8e;
+      --pink-soft: #fde8f3;
+
+      --violet: #7c4fd3;
+      --violet-soft: #f0e8ff;
+
+      --teal: #0f8b8d;
+      --teal-soft: #dcf7f5;
+
+      --orange: #c9691e;
+      --orange-soft: #fff0e1;
+
+      --code: #162033;
+      --code-text: #eef4ff;
+
+      --sidebar: #223a70;
+      --sidebar-text: #ffffff;
+      --sidebar-muted: #c9d6f4;
+
+      --shadow: 0 12px 28px rgba(53, 76, 126, .12);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(124, 79, 211, .10), transparent 28%),
+        radial-gradient(circle at top right, rgba(20, 121, 184, .10), transparent 24%),
+        linear-gradient(180deg, #eef4ff 0%, #f8fbff 100%);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    button, input { font: inherit; }
+    a { color: inherit; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      background:
+        linear-gradient(180deg, #223a70 0%, #2f4c8f 52%, #3658a7 100%);
+      color: var(--sidebar-text);
+      padding: 24px 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .brand-badge {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: rgba(255,255,255,.1);
+      font-weight: 800;
+    }
+
+    .brand strong { display: block; font-size: 1rem; }
+    .brand span { display: block; color: var(--sidebar-muted); font-size: .82rem; }
+
+    .search-wrap { margin-bottom: 16px; }
+    .search {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.08);
+      color: white;
+      border-radius: 10px;
+      padding: 11px 12px;
+      outline: none;
+    }
+    .search::placeholder { color: #aeb7c7; }
+    .search:focus { border-color: #8ea4ff; }
+
+    .search-hint {
+      margin-top: 7px;
+      color: var(--sidebar-muted);
+      font-size: .74rem;
+      line-height: 1.4;
+    }
+
+    .search-score {
+      display: none;
+      flex: 0 0 auto;
+      align-self: center;
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, #f4f7ff, #eef8ff);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: .72rem;
+      font-weight: 700;
+    }
+
+    .searching .search-score { display: inline-flex; }
+
+    .no-results {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      border-radius: 14px;
+      padding: 18px;
+      margin: 14px 0;
+      color: var(--muted);
+    }
+
+    .no-results strong {
+      display: block;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .side-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .side-actions button, .theme-btn {
+      border: 1px solid rgba(255,255,255,.14);
+      color: white;
+      background: rgba(255,255,255,.08);
+      border-radius: 9px;
+      padding: 8px 9px;
+      cursor: pointer;
+    }
+
+    .side-actions button:hover, .theme-btn:hover {
+      background: rgba(255,255,255,.14);
+    }
+
+    nav h2 {
+      margin: 16px 8px 8px;
+      color: var(--sidebar-muted);
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    nav a {
+      display: block;
+      text-decoration: none;
+      color: var(--sidebar-muted);
+      padding: 8px 10px;
+      margin: 2px 0;
+      border-radius: 8px;
+      font-size: .9rem;
+    }
+
+    nav a:hover, nav a.active {
+      color: white;
+      background: rgba(255,255,255,.1);
+    }
+
+    main {
+      min-width: 0;
+      padding: 36px clamp(20px, 4vw, 64px) 72px;
+    }
+
+    .hero {
+      max-width: 1080px;
+      margin: 0 auto 28px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.96) 0%, rgba(237,240,255,.98) 48%, rgba(228,244,255,.98) 100%);
+      border: 1px solid #bfd0f0;
+      border-radius: 20px;
+      padding: clamp(24px, 4vw, 42px);
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      height: 38px;
+      width: auto;
+      display: block;
+      margin: 0 0 18px;
+    }
+
+    h1 .nave {
+      height: .78em;
+      width: auto;
+      vertical-align: -.02em;
+      margin-right: 14px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #ececff, #e4f4ff);
+      color: #4653b8;
+      font-weight: 700;
+      font-size: .82rem;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 5vw, 3.6rem);
+      line-height: 1.05;
+      letter-spacing: -.04em;
+    }
+
+    .hero p {
+      max-width: 820px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .mini-card {
+      background: rgba(255,255,255,.72);
+      border: 1px solid #c8d6f0;
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .mini-card strong { display: block; margin-bottom: 3px; }
+    .mini-card span { color: var(--muted); font-size: .88rem; }
+
+    .results {
+      max-width: 1080px;
+      margin: 0 auto 12px;
+      color: var(--muted);
+      font-size: .9rem;
+      display: none;
+    }
+
+    .content {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    section.topic {
+      scroll-margin-top: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+      border: 1px solid #c9d7ef;
+      border-radius: 16px;
+      margin: 16px 0;
+      box-shadow: 0 5px 18px rgba(16, 24, 40, .04);
+      overflow: hidden;
+    }
+
+    .topic-header {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      padding: 20px 22px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .topic-header:hover { background: #eef4ff; }
+    .topic-num {
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #ececff, #e4f4ff);
+      color: #4653b8;
+      font-weight: 800;
+      font-size: .85rem;
+    }
+
+    .topic-title { flex: 1; min-width: 0; }
+    .topic-title h2 { margin: 0 0 2px; font-size: 1.2rem; }
+    .topic-title p { margin: 0; color: var(--muted); font-size: .9rem; }
+    .chev { color: var(--muted); font-size: 1.2rem; transition: transform .2s ease; }
+
+    section.topic.open .chev { transform: rotate(180deg); }
+    .topic-body { display: none; padding: 0 22px 24px 70px; }
+    section.topic.open .topic-body { display: block; }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+      padding: 13px 15px;
+      border-radius: 0 10px 10px 0;
+      margin: 14px 0;
+    }
+
+    .callout.success {
+      border-left-color: var(--success);
+      background: var(--success-soft);
+    }
+
+    .callout.warn {
+      border-left-color: var(--warn);
+      background: var(--warn-soft);
+    }
+
+    .callout strong { display: block; margin-bottom: 3px; }
+
+    .pair {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 14px 0;
+    }
+
+    .code-card {
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--code);
+    }
+
+    .code-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      color: #c6cfdf;
+      background: linear-gradient(90deg, #26395f, #304b7f);
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+
+    pre {
+      margin: 0;
+      padding: 14px;
+      overflow: auto;
+      color: var(--code-text);
+      font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      white-space: pre;
+    }
+
+    code.inline {
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #f4f7ff, #eef8ff);
+      border: 1px solid var(--border);
+      font-family: ui-monospace, monospace;
+      font-size: .9em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: .92rem;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: linear-gradient(90deg, #e8efff, #eef7ff);
+      color: #31466f;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0 16px;
+    }
+
+    .pill {
+      border: 1px solid var(--border);
+      background: #eef4ff;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: .86rem;
+    }
+
+    .remember {
+      margin: 18px 0 0;
+      padding: 16px;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      background: linear-gradient(135deg, #f4f7ff, #eef8ff);
+    }
+
+    .remember strong { display: block; margin-bottom: 6px; }
+
+    .topic:nth-of-type(4n+1) .topic-num {
+      background: var(--violet-soft);
+      color: var(--violet);
+    }
+    .topic:nth-of-type(4n+2) .topic-num {
+      background: var(--info-soft);
+      color: var(--info);
+    }
+    .topic:nth-of-type(4n+3) .topic-num {
+      background: var(--teal-soft);
+      color: var(--teal);
+    }
+    .topic:nth-of-type(4n+4) .topic-num {
+      background: var(--pink-soft);
+      color: var(--pink);
+    }
+
+    .topic:nth-of-type(4n+1) {
+      border-left: 5px solid var(--violet);
+    }
+    .topic:nth-of-type(4n+2) {
+      border-left: 5px solid var(--info);
+    }
+    .topic:nth-of-type(4n+3) {
+      border-left: 5px solid var(--teal);
+    }
+    .topic:nth-of-type(4n+4) {
+      border-left: 5px solid var(--pink);
+    }
+
+    .hidden-by-search { display: none !important; }
+
+    .back-top {
+      display: inline-flex;
+      margin-top: 28px;
+      text-decoration: none;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    footer {
+      max-width: 1080px;
+      margin: 38px auto 0;
+      color: var(--muted);
+      text-align: center;
+      font-size: .88rem;
+    }
+
+    @media (max-width: 900px) {
+      .app { display: block; }
+      aside {
+        position: static;
+        height: auto;
+        overflow: visible;
+        padding: 16px;
+      }
+      nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px;
+      }
+      nav h2 { grid-column: 1 / -1; }
+      main { padding: 22px 14px 52px; }
+      .hero-grid { grid-template-columns: 1fr; }
+      .pair { grid-template-columns: 1fr; }
+      .topic-body { padding: 0 16px 20px; }
+    }
+
+    @media (max-width: 520px) {
+      nav { grid-template-columns: 1fr; }
+      .side-actions { grid-template-columns: 1fr; }
+      .topic-header { padding: 16px; }
+      .topic-title h2 { font-size: 1.05rem; }
+    }
+
+    @media print {
+      aside, .side-actions, .search-wrap { display: none !important; }
+      .app { display: block; }
+      main { padding: 0; }
+      section.topic { box-shadow: none; break-inside: avoid; }
+      section.topic .topic-body { display: block !important; }
+      .hero { box-shadow: none; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="app" id="top">
+  <aside>
+    <div class="brand">
+      <div class="brand-badge">SQL</div>
+      <div>
+        <strong>Sequelize Cheat Sheet</strong>
+        <span>SQL ↔ Sequelize</span>
+      </div>
+    </div>
+
+    <div class="search-wrap">
+      <label for="search" style="position:absolute;left:-9999px;">Buscar en la guía</label>
+      <input id="search" class="search" type="search" autocomplete="off"
+        placeholder="Buscar: borrar usuario, JOIN, Op.like..." />
+      <div class="search-hint">
+        Busca por SQL, Sequelize o una idea: <strong>insertar</strong>, <strong>filtrar</strong>,
+        <strong>unir tablas</strong>, <strong>paginación</strong>...
+      </div>
+    </div>
+
+    <div class="side-actions">
+      <button id="expandAll" type="button">Expandir todo</button>
+      <button id="collapseAll" type="button">Contraer todo</button>
+    </div>
+    <button id="printBtn" class="theme-btn" type="button" style="width:100%;">Imprimir / PDF</button>
+
+    <nav aria-label="Índice de contenidos">
+      <h2>Índice</h2>
+      <a href="#intro">1. ¿Qué es Sequelize?</a>
+      <a href="#conexion">2. Conexión</a>
+      <a href="#modelos">3. Modelos y tipos</a>
+      <a href="#crud">4. CRUD</a>
+      <a href="#where">5. WHERE y operadores</a>
+      <a href="#consultas">6. SELECT, orden y paginación</a>
+      <a href="#relaciones">7. Relaciones</a>
+      <a href="#include">8. JOIN con include</a>
+      <a href="#agregaciones">9. Agregaciones</a>
+      <a href="#validaciones">10. Validaciones y errores</a>
+      <a href="#transacciones">11. Transacciones</a>
+      <a href="#migraciones">12. Migraciones y seeders</a>
+      <a href="#softdelete">13. Soft Delete</a>
+      <a href="#raw">14. SQL directo</a>
+      <a href="#ejemplo-integrador">15. Todo en conjunto</a>
+      <a href="#referencia">16. Referencia rápida</a>
+    </nav>
+  </aside>
+
+  <main>
+    <header class="hero">
+      <img class="brand" src="img/logo.png" alt="btsoft — Transformando ideas en codigo">
+      <span class="eyebrow">Material de consulta</span>
+      <h1><img class="nave" src="img/nave.png" alt="">Sequelize para quienes ya conocen SQL</h1>
+      <p>
+        Usa esta guía como referencia rápida. Cada sección conecta una idea que ya conoces en SQL
+        con su equivalente habitual en Sequelize.
+      </p>
+      <div class="hero-grid">
+        <div class="mini-card"><strong>Piensa en equivalencias</strong><span>Tabla → Modelo · Fila → Instancia · JOIN → include.</span></div>
+        <div class="mini-card"><strong>No olvides SQL</strong><span>Sequelize genera SQL; entenderlo te ayuda a usar mejor el ORM.</span></div>
+        <div class="mini-card"><strong>Busca lo que necesitas</strong><span>Usa el buscador o el índice lateral para saltar directamente al tema.</span></div>
+      </div>
+    </header>
+
+    <div id="results" class="results" aria-live="polite"></div>
+    <div id="noResults" class="no-results" hidden>
+      <strong>No encontré una sección relacionada.</strong>
+      Prueba con palabras como SELECT, insertar, borrar, JOIN, relaciones, filtrar,
+      paginación, transacción o SQL directo.
+    </div>
+
+    <div class="content">
+
+      <section class="topic open" id="intro" data-keywords="orm sequelize sql tabla modelo objeto javascript node">
+        <button class="topic-header" type="button" aria-expanded="true">
+          <span class="topic-num">01</span>
+          <span class="topic-title"><h2>¿Qué es Sequelize?</h2><p>El puente entre SQL y objetos de JavaScript.</p></span>
+          <span class="search-score" aria-hidden="true"></span><span class="chev">⌄</span>
+        </button>
+        <div class="topic-body">
+          <p><strong>Sequelize es un ORM para Node.js.</strong> Permite representar tablas como modelos y realizar operaciones de base de datos mediante métodos de JavaScript.</p>
+
+          <div class="pair">
+            <div class="code-card"><div class="code-label">SQL</div><pre>SELECT * FROM usuarios;</pre></div>
+            <div class="code-card"><div class="code-label">Sequelize</div><pre>const usuarios = await Usuario.findAll();</pre></div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Concepto SQL</th><th>Equivalente en Sequelize</th></tr></thead>
+              <tbody>
+                <tr><td>Base de datos</td><td>Instancia de Sequelize</td></tr>
+                <tr><td>Tabla</td><td>Modelo</td></tr>
+                <tr><td>Columna</td><td>Atributo</td></tr>
+                <tr><td>Registro / fila</td><td>Instancia del modelo</td></tr>
+                <tr><td>SELECT</td><td>findAll / findOne / findByPk</td></tr>
+                <tr><td>INSERT</td><td>create</td></tr>
+                <tr><td>UPDATE</td><td>update</td></tr>
+                <tr><td>DELETE</td><td>destroy</td></tr>
+                <tr><td>WHERE</td><td>where</td></tr>
+                <tr><td>JOIN</td><td>include</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout success"><strong>Recuerda</strong>Sequelize no sustituye los conceptos de SQL. Los expresa desde JavaScript y genera las consultas correspondientes.</div>
+        </div>
+      </section>
+
+      <section class="topic" id="conexion" data-keywords="conexion database mysql postgres mariadb sqlite authenticate sequelize">
+        <button class="topic-header" type="button" aria-expanded="false">
+          <span class="topic-num">02</span>
+          <span class="topic-title"><h2>Conexión a la base de datos</h2><p>Crear la instancia y verificar que la conexión funciona.</p></span>
+          <span class="search-score" aria-hidden="true"></span><span class="chev">⌄</span>
+        </button>
+        <div class="topic-body">
+          <div class="code-card"><div class="code-label">JavaScript</div><pre>const { Sequelize } = require('sequelize');
+
+const sequelize = new Sequelize(
+  'nombre_base_datos',
+  'usuario',
+  'contraseña',
+  {
+    host: 'localhost',
+    dialect: 'mysql'
+  }
+);</pre></div>
+
+          <div class="pill-row">
+            <span class="pill">mysql</span><span class="pill">postgres</span><span class="pill">mariadb</span><span class="pill">sqlite</span>
+          </div>
+
+          <div class="code-card"><div class="code-label">Probar conexión</div><pre>try {
+  await sequelize.authenticate();
+  console.log('Conexión correcta');
+} catch (error) {
+  console.error('Error de conexión:', error);
+}</pre></div>
+
+          <div class="callout warn"><strong>Importante</strong>En un proyecto real, evita dejar usuario y contraseña escritos directamente en el código. Normalmente se usan variables de entorno.</div>
+        </div>
+      </section>
+
+      <section class="topic" id="modelos" data-keywords="modelos datatypes string integer boolean decimal date primarykey autoincrement allowNull unique defaultValue">
+        <button class="topic-header" type="button" aria-expanded="false">
+          <span class="topic-num">03</span>
+          <span class="topic-title"><h2>Modelos, atributos y tipos de datos</h2><p>Cómo representar una tabla SQL mediante un modelo.</p></span>
+          <span class="search-score" aria-hidden="true"></span><span class="chev">⌄</span>
+        </button>
+        <div class="topic-body">
+          <div class="pair">
+            <div class="code-card"><div class="code-label">SQL</div><pre>CREATE TABLE usuarios (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  nombre VARCHAR(100) NOT NULL,
+  correo VARCHAR(150) UNIQUE,
+  edad INT
+);</pre></div>
+            <div class="code-card"><div class="code-label">Sequelize</div><pre>const Usuario = sequelize.define('Usuario', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  nombre: {
+    type: DataTypes.STRING(100),
+    allowNull: false
+  },
+  correo: {
+    type: DataTypes.STRING(150),
+    unique: true
+  },
+  edad: {
+    type: DataTypes.INTEGER
+  }
+});</pre></div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>SQL</th><th>Sequelize</th></tr></thead>
+              <tbody>
+                <tr><td>VARCHAR</td><td>DataTypes.STRING</td></tr>
+                <tr><td>TEXT</td><td>DataTypes.TEXT</td></tr>
+                <tr><td>INT</td><td>DataTypes.INTEGER</td></tr>
+                <tr><td>BIGINT</td><td>DataTypes.BIGINT</td></tr>
+                <tr><td>DECIMAL</td><td>DataTypes.DECIMAL</td></tr>
+                <tr><td>FLOAT</td><td>DataTypes.FLOAT</td></tr>
+                <tr><td>BOOLEAN</td><td>DataTypes.BOOLEAN</td></tr>
+                <tr><td>DATE</td><td>DataTypes.DATE</td></tr>
+                <tr><td>DATE sin hora</td><td>DataTypes.DATEONLY</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="remember"><strong>Propiedades que aparecen mucho</strong><code class="inline">allowNull</code>, <code class="inline">unique</code>, <code class="inline">defaultValue</code>, <code class="inline">primaryKey</code> y <code class="inline">autoIncrement</code>.</div>
+        </div>
+      </section>
+
+      <section class="topic" id="crud" data-keywords="crud insert select update delete create findAll findOne findByPk destroy">
+        <button class="topic-header" type="button" aria-expanded="false">
+          <span class="topic-num">04</span>
+          <span class="topic-title"><h2>CRUD básico</h2><p>INSERT, SELECT, UPDATE y DELETE.</p></span>
+          <span class="search-score" aria-hidden="true"></span><span class="chev">⌄</span>
+        </button>
+        <div class="topic-body">
+          <h3>INSERT → create()</h3>
+          <div class="pair">
+            <div class="code-card"><div class="code-label">SQL</div><pre>INSERT INTO usuarios(nombre, correo)
+VALUES ('Ana', 'ana@email.com');</pre></div>
+            <div class="code-card"><div class="code-label">Sequelize</div><pre>await Usuario.create({
+  nombre: 'Ana',
+  correo: 'ana@email.com'
+});</pre></div>
+          </div>
+
+          <h3>SELECT → findAll()</h3>
+          <div class="pair">
+            <div class="code-card"><div class="code-label">SQL</div><pre>SELECT * FROM usuarios;</pre></div>
+            <div class="code-card"><div class="code-label">Sequelize</div><pre>const usuarios = await Usuario.findAll();</pre></div>
+          </div>
+
+          <h3>Buscar por Primary Key → findByPk()</h3>
+          <div class="code-card"><div class="code-label">Sequelize</div><pre>const usuario = await Usuario.findByPk(5);</pre></div>
+
+          <h3>Buscar un registro → findOne()</h3>
+          <div class="code-card"><div class="code-label">Sequelize</div><pre>const usuario = await Usuario.findOne({
+  where: {
+    correo: 'ana@email.com'
+  }
+});</pre></div>
+
+          <h3>UPDATE → update()</h3>
+          <div class="code-card"><div class="code-label">Sequelize</div><pre>await Usuario.update(
+  { nombre: 'Ana María' },
+  { where: { id: 5 } }
+);</pre></div>
+
+          <h3>DELETE → destroy()</h3>
+          <div class="code-card"><div class="code-label">Sequelize</div><pre>await Usuario.destroy({
+  where: { id: 5 }
+});</pre></div>
+
+          <div class="callout warn"><strong>Cuidado con UPDATE y DELETE</strong>Normalmente debes acompañarlos de un <code class="inline">where</code> para indicar exactamente qué registros quieres modificar o eliminar.</div>
+        </div>
+      </section>
+
+      <section class="topic" id="where" data-keywords="where op eq ne gt gte lt lte like between in notin and or filtros operadores">
+        <button class="topic-header" type="button" aria-expanded="false">
+          <span class="topic-num">05</span>
+          <span class="topic-title"><h2>WHERE y operadores</h2><p>Filtros, comparaciones y condiciones combinadas.</p></span>
+          <span class="search-score" aria-hidden="true"></span><span class="chev">⌄</span>
+        </button>
+        <div class="topic-body">
+          <p>Para operadores especiales se usa <code class="inline">Op</code>:</p>
+          <div class="code-card"><div class="code-label">Importar</div><pre>const { Op } = require('sequelize');</pre></div>
+
+          <div class="pair">
+            <div class="code-card"><div class="code-label">SQL</div><pre>SELECT *
+FROM productos
+WHERE precio &gt;= 100
+  AND stock &gt; 0;</pre></div>
+            <div class="code-card"><div class="code-label">Sequelize</div><pre>await Producto.findAll({
+  where: {
+    precio: { [Op.gte]: 100 },
+    stock: { [Op.gt]: 0 }
+  }
+});</pre></div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>SQL</th><th>Sequelize</th><th>Ejemplo mental</th></tr></thead>
+              <tbody>
+                <tr><td>=</td><td>[Op.eq]</td><td>igual</td></tr>
+                <tr><td>&lt;&gt; / !=</td><td>[Op.ne]</td><td>diferente</td></tr>
+                <tr><td>&gt;</td><td>[Op.gt]</td><td>mayor que</td></tr>
+                <tr><td>&gt;=</td><td>[Op.gte]</td><td>mayor o igual</td></tr>
+                <tr><td>&lt;</td><td>[Op.lt]</td><td>menor que</td></tr>
+                <tr><td>&lt;=</td><td>[Op.lte]</td><td>menor o igual</td></tr>
+                <tr><td>LIKE</td><td>[Op.like]</td><td>patrón de texto</td></tr>
+                <tr><td>BETWEEN</td><td>[Op.between]</td><td>rango</td></tr>
+                <tr><td>IN</td><td>[Op.in]</td><td>lista de valores</td></tr>
+                <tr><td>NOT IN</td><td>[Op.notIn]</td><td>fuera de una lista</td></tr>
+                <tr><td>AND</td><td>[Op.and]</td><td>todas las condiciones</td></tr>
+                <tr><td>OR</td><td>[Op.or]</td><td>alguna condición</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>LIKE</h3>
+          <div class="code-card"><div class="code-label">Sequelize</div><pre>where: {
+  nombre: {
+    [Op.like]: '%Juan%'
+  }
+}</pre></div>
+
+          <h3>BETWEEN</h3>
+          <div class="code-card"><div class="code-label">Sequelize</div><pre>where: {
+  precio: {
+    [Op.between]: [100, 500]
+  }
+}</pre></div>
+
+          <h3>IN</h3>
+          <div class="code-card"><div class="code-label">Sequelize</div><pre>where: {
+  id: {
+    [Op.in]: [1, 2, 3]
+  }
+}</pre></div>
+
+          <h3>OR</h3>
+          <div class="code-card"><div class="code-label">Sequelize</div><pre>where: {
+  [Op.or]: [
+    { estado: 'PENDIENTE' },
+    { estado: 'PROCESANDO' }
+  ]
+}</pre></div>
+        </div>
+      </section>
+
+      <section class="topic" id="consultas" data-keywords="attributes order asc desc limit offset paginacion select columnas ordenar">
+        <button class="topic-header" type="button" aria-expanded="false">
+          <span class="topic-num">06</span>
+          <span class="topic-title"><h2>SELECT, columnas, orden y paginación</h2><p>Elegir columnas, ordenar resultados y limitar registros.</p></span>
+          <span class="search-score" aria-hidden="true"></span><span class="chev">⌄</span>
+        </button>
+        <div class="topic-body">
+          <h3>Seleccionar columnas → attributes</h3>
+          <div class="pair">
+            <div class="code-card"><div class="code-label">SQL</div><pre>SELECT id, nombre, correo
+FROM usuarios;</pre></div>
+            <div class="code-card"><div class="code-label">Sequelize</div><pre>await Usuario.findAll({
+  attributes: ['id', 'nombre', 'correo']
+});</pre></div>
+          </div>
+
+          <h3>ORDER BY → order</h3>
+          <div class="code-card"><div class="code-label">Sequelize</div><pre>await Producto.findAll({
+  order: [['precio', 'DESC']]
+});</pre></div>
+
+          <h3>LIMIT y OFFSET</h3>
+          <div class="pair">
+            <div class="code-card"><div class="code-label">SQL</div><pre>SELECT *
+FROM productos
+LIMIT 10 OFFSET 20;</pre></div>
+            <div class="code-card"><div class="code-label">Sequelize</div><pre>await Producto.findAll({
+  limit: 10,
+  offset: 20
+});</pre></div>
+          </div>
+
+          <div class="callout success"><strong>Uso típico</strong><code class="inline">limit</code> + <code class="inline">offset</code> se usan frecuentemente para implementar paginación.</div>
+        </div>
+      </section>
+
+      <section class="topic" id="relaciones" data-keywords="relaciones associations hasOne belongsTo hasMany belongsToMany uno uno muchos tabla intermedia foreign key">
+        <button class="topic-header" type="button" aria-expanded="false">
+          <span class="topic-num">07</span>
+          <span class="topic-title"><h2>Relaciones entre modelos</h2><p>1:1, 1:N y N:M.</p></span>
+          <span class="search-score" aria-hidden="true"></span><span class="chev">⌄</span>
+        </button>
+        <div class="topic-body">
+          <h3>Uno a uno</h3>
+          <div class="code-card"><div class="code-label">Sequelize</div><pre>Usuario.hasOne(Perfil);
+Perfil.belongsTo(Usuario);</pre></div>
+
+          <h3>Uno a muchos</h3>
+          <div class="code-card"><div class="code-label">Sequelize</div><pre>Cliente.hasMany(Pedido);
+Pedido.belongsTo(Cliente);</pre></div>
+
+          <h3>Muchos a muchos</h3>
+          <div class="code-card"><div class="code-label">Sequelize</div><pre>Estudiante.belongsToMany(Curso, {
+  through: 'estudiantes_cursos'
+});
+
+Curso.belongsToMany(Estudiante, {
+  through: 'estudiantes_cursos'
+});</pre></div>
+
+          <div class="remember"><strong>Forma de pensarlo</strong><code class="inline">belongsTo</code> suele señalar el lado que contiene o referencia la Foreign Key. En relaciones N:M existe una tabla intermedia.</div>
+        </div>
+      </section>
+
+      <section class="topic" id="include" data-keywords="include join left inner required eager loading asociaciones relaciones">
+        <button class="topic-header" type="button" aria-expanded="false">
+          <span class="topic-num">08</span>
+          <span class="topic-title"><h2>JOIN mediante include</h2><p>Traer información de modelos relacionados.</p></span>
+          <span class="search-score" aria-hidden="true"></span><span class="chev">⌄</span>
+        </button>
+        <div class="topic-body">
+          <div class="pair">
+            <div class="code-card"><div class="code-label">SQL conceptual</div><pre>SELECT *
+FROM clientes
+LEFT JOIN pedidos
+  ON clientes.id = pedidos.cliente_id;</pre></div>
+            <div class="code-card"><div class="code-label">Sequelize</div><pre>await Cliente.findAll({
+  include: Pedido
+});</pre></div>
+          </div>
+
+          <h3>JOIN con condición</h3>
+          <div class="code-card"><div class="code-label">Sequelize</div><pre>await Cliente.findAll({
+  include: {
+    model: Pedido,
+    where: {
+      estado: 'PENDIENTE'
+    }
+  }
+});</pre></div>
+
+          <h3>INNER JOIN con required</h3>
+          <div class="code-card"><div class="code-label">Sequelize</div><pre>await Cliente.findAll({
+  include: {
+    model: Pedido,
+    required: true
+  }
+});</pre></div>
+
+          <div class="callout success"><strong>Regla rápida</strong>Cuando veas <code class="inline">include</code>, piensa en un JOIN o en cargar información relacionada.</div>
+        </div>
+      </section>
+
+      <section class="topic" id="agregaciones" data-keywords="count sum min max promedio aggregation funciones agregacion">
+        <button class="topic-header" type="button" aria-expanded="false">
+          <span class="topic-num">09</span>
+          <span class="topic-title"><h2>Funciones de agregación</h2><p>COUNT, SUM, MIN y MAX.</p></span>
+          <span class="search-score" aria-hidden="true"></span><span class="chev">⌄</span>
+        </button>
+        <div class="topic-body">
+          <div class="code-card"><div class="code-label">Sequelize</div><pre>const cantidad = await Usuario.count();
+
+const activos = await Usuario.count({
+  where: { activo: true }
+});
+
+const maximo = await Producto.max('precio');
+const minimo = await Producto.min('precio');
+const total = await Producto.sum('precio');</pre></div>
+          <div class="remember"><strong>Referencia rápida</strong><code class="inline">count()</code> cuenta registros · <code class="inline">max()</code> obtiene el máximo · <code class="inline">min()</code> el mínimo · <code class="inline">sum()</code> suma una columna.</div>
+        </div>
+      </section>
+
+      <section class="topic" id="validaciones" data-keywords="validaciones errores isEmail min len unique allowNull try catch validation error">
+        <button class="topic-header" type="button" aria-expanded="false">
+          <span class="topic-num">10</span>
+          <span class="topic-title"><h2>Validaciones y manejo de errores</h2><p>Validar datos y capturar fallos.</p></span>
+          <span class="search-score" aria-hidden="true"></span><span class="chev">⌄</span>
+        </button>
+        <div class="topic-body">
+          <div class="code-card"><div class="code-label">Modelo</div><pre>correo: {
+  type: DataTypes.STRING,
+  validate: {
+    isEmail: true
+  }
+}
+
+nombre: {
+  type: DataTypes.STRING,
+  validate: {
+    len: [3, 100]
+  }
+}
+
+edad: {
+  type: DataTypes.INTEGER,
+  validate: {
+    min: 0
+  }
+}</pre></div>
+
+          <h3>try / catch</h3>
+          <div class="code-card"><div class="code-label">JavaScript</div><pre>try {
+  const usuario = await Usuario.create({
+    nombre: 'Ana',
+    correo: 'ana@email.com'
+  });
+} catch (error) {
+  console.error(error);
+}</pre></div>
+
+          <div class="pill-row">
+            <span class="pill">Campos obligatorios</span><span class="pill">Valores duplicados</span><span class="pill">Validaciones</span><span class="pill">Foreign Keys</span><span class="pill">Conexión</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic" id="transacciones" data-keywords="transacciones transaction commit rollback begin integridad">
+        <button class="topic-header" type="button" aria-expanded="false">
+          <span class="topic-num">11</span>
+          <span class="topic-title"><h2>Transacciones</h2><p>Varias operaciones como una sola unidad.</p></span>
+          <span class="search-score" aria-hidden="true"></span><span class="chev">⌄</span>
+        </button>
+        <div class="topic-body">
+          <div class="pair">
+            <div class="code-card"><div class="code-label">SQL conceptual</div><pre>BEGIN;
+
+UPDATE cuentas
+SET saldo = saldo - 100
+WHERE id = 1;
+
+UPDATE cuentas
+SET saldo = saldo + 100
+WHERE id = 2;
+
+COMMIT;</pre></div>
+            <div class="code-card"><div class="code-label">Sequelize</div><pre>await sequelize.transaction(async (transaction) => {
+  await Cuenta.update(
+    { saldo: 900 },
+    {
+      where: { id: 1 },
+      transaction
+    }
+  );
+
+  await Cuenta.update(
+    { saldo: 1100 },
+    {
+      where: { id: 2 },
+      transaction
+    }
+  );
+});</pre></div>
+          </div>
+          <div class="callout success"><strong>Idea principal</strong>Si todo sale bien, se confirma la operación. Si algo falla, la transacción puede revertirse para evitar datos inconsistentes.</div>
+        </div>
+      </section>
+
+      <section class="topic" id="migraciones" data-keywords="migrations migraciones seeders semillas up down create table alter add column agregar columna telefono queryinterface db migrate undo datos iniciales">
+        <button class="topic-header" type="button" aria-expanded="false">
+          <span class="topic-num">12</span>
+          <span class="topic-title"><h2>Migraciones y seeders</h2><p>Modificar la estructura de la base de datos de forma controlada.</p></span>
+          <span class="search-score" aria-hidden="true"></span><span class="chev">⌄</span>
+        </button>
+
+        <div class="topic-body">
+          <h3>¿Qué es una migración?</h3>
+
+          <p>
+            Una migración es un archivo que describe un cambio que queremos realizar en la
+            estructura de la base de datos y también cómo deshacerlo.
+          </p>
+
+          <div class="callout success">
+            <strong>Forma sencilla de pensarlo</strong>
+            Una migración es como guardar en un archivo un <code class="inline">ALTER TABLE</code>,
+            un <code class="inline">CREATE TABLE</code> u otro cambio de estructura para poder
+            aplicarlo de manera controlada.
+          </div>
+
+          <div class="pair">
+            <div class="code-card">
+              <div class="code-label">Antes</div>
+              <pre>usuarios
+-------------------------
+id
+nombre
+correo</pre>
+            </div>
+
+            <div class="code-card">
+              <div class="code-label">Queremos llegar a</div>
+              <pre>usuarios
+-------------------------
+id
+nombre
+correo
+telefono</pre>
+            </div>
+          </div>
+
+          <h3>Ejemplo: agregar la columna telefono</h3>
+
+          <p>
+            En SQL probablemente haríamos algo parecido a esto:
+          </p>
+
+          <div class="code-card">
+            <div class="code-label">SQL</div>
+            <pre>ALTER TABLE usuarios
+ADD telefono VARCHAR(20);</pre>
+          </div>
+
+          <p>
+            Con una migración, ese mismo cambio queda registrado en un archivo.
+            Si se utiliza Sequelize CLI, primero puede generarse una migración:
+          </p>
+
+          <div class="code-card">
+            <div class="code-label">Terminal</div>
+            <pre>npx sequelize-cli migration:generate --name agregar-telefono-a-usuarios</pre>
+          </div>
+
+          <p>Se generará un archivo de migración. Dentro podemos definir el cambio:</p>
+
+          <div class="code-card">
+            <div class="code-label">Migration · agregar-telefono-a-usuarios.js</div>
+            <pre>'use strict';
+
+module.exports = {
+  async up(queryInterface, Sequelize) {
+
+    await queryInterface.addColumn(
+      'usuarios',
+      'telefono',
+      {
+        type: Sequelize.STRING(20),
+        allowNull: true
+      }
+    );
+
+  },
+
+  async down(queryInterface, Sequelize) {
+
+    await queryInterface.removeColumn(
+      'usuarios',
+      'telefono'
+    );
+
+  }
+};</pre>
+          </div>
+
+          <div class="pair">
+            <div class="callout success">
+              <strong>up()</strong>
+              Indica qué debe ocurrir al aplicar la migración. En este caso:
+              <strong>agregar la columna telefono</strong>.
+            </div>
+
+            <div class="callout warn">
+              <strong>down()</strong>
+              Indica cómo deshacer el cambio. En este caso:
+              <strong>eliminar la columna telefono</strong>.
+            </div>
+          </div>
+
+          <h3>Aplicar la migración</h3>
+
+          <div class="code-card">
+            <div class="code-label">Terminal</div>
+            <pre>npx sequelize-cli db:migrate</pre>
+          </div>
+
+          <p>Después de ejecutarla, la tabla quedaría conceptualmente así:</p>
+
+          <div class="code-card">
+            <div class="code-label">Resultado</div>
+            <pre>usuarios
+-------------------------
+id
+nombre
+correo
+telefono   ← nueva columna</pre>
+          </div>
+
+          <h3>Deshacer la última migración</h3>
+
+          <div class="code-card">
+            <div class="code-label">Terminal</div>
+            <pre>npx sequelize-cli db:migrate:undo</pre>
+          </div>
+
+          <p>
+            Sequelize ejecutará el método <code class="inline">down()</code>. En nuestro ejemplo,
+            eliminará nuevamente la columna <code class="inline">telefono</code>.
+          </p>
+
+          <div class="callout warn">
+            <strong>Importante: migración y modelo no son lo mismo</strong>
+            La migración modifica físicamente la estructura de la base de datos.
+            El modelo describe cómo Sequelize trabajará con esa tabla desde la aplicación.
+            Si agregamos <code class="inline">telefono</code> a la base de datos y queremos utilizarlo
+            desde el modelo, también debemos agregar ese atributo al modelo correspondiente.
+          </div>
+
+          <div class="code-card">
+            <div class="code-label">Modelo actualizado</div>
+            <pre>telefono: {
+  type: DataTypes.STRING(20),
+  allowNull: true
+}</pre>
+          </div>
+
+          <div class="remember">
+            <strong>Resumen de migraciones</strong>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Necesito...</th>
+                    <th>En la migración</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Crear una tabla</td>
+                    <td><code class="inline">queryInterface.createTable()</code></td>
+                  </tr>
+                  <tr>
+                    <td>Agregar una columna</td>
+                    <td><code class="inline">queryInterface.addColumn()</code></td>
+                  </tr>
+                  <tr>
+                    <td>Eliminar una columna</td>
+                    <td><code class="inline">queryInterface.removeColumn()</code></td>
+                  </tr>
+                  <tr>
+                    <td>Cambiar una columna</td>
+                    <td><code class="inline">queryInterface.changeColumn()</code></td>
+                  </tr>
+                  <tr>
+                    <td>Eliminar una tabla</td>
+                    <td><code class="inline">queryInterface.dropTable()</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <h3>¿Y los seeders?</h3>
+
+          <p>
+            Los seeders no cambian la estructura. Sirven para insertar datos iniciales o de prueba.
+          </p>
+
+          <div class="pair">
+            <div class="code-card">
+              <div class="code-label">Migración</div>
+              <pre>Agrega la tabla roles</pre>
+            </div>
+
+            <div class="code-card">
+              <div class="code-label">Seeder</div>
+              <pre>roles
+----------------
+1  ADMIN
+2  CLIENTE
+3  EMPLEADO</pre>
+            </div>
+          </div>
+
+          <div class="callout success">
+            <strong>Diferencia rápida</strong>
+            Migración = modifica la <strong>estructura</strong>.<br>
+            Seeder = agrega <strong>datos</strong>.
+          </div>
+        </div>
+      </section>
+
+      <section class="topic" id="softdelete" data-keywords="soft delete paranoid deletedAt eliminacion logica">
+        <button class="topic-header" type="button" aria-expanded="false">
+          <span class="topic-num">13</span>
+          <span class="topic-title"><h2>Soft Delete / paranoid</h2><p>Marcar como eliminado sin borrar físicamente.</p></span>
+          <span class="search-score" aria-hidden="true"></span><span class="chev">⌄</span>
+        </button>
+        <div class="topic-body">
+          <div class="code-card"><div class="code-label">Modelo</div><pre>const Usuario = sequelize.define(
+  'Usuario',
+  {
+    nombre: DataTypes.STRING
+  },
+  {
+    paranoid: true
+  }
+);</pre></div>
+
+          <p>Con <code class="inline">paranoid: true</code>, Sequelize usa normalmente una columna como <code class="inline">deletedAt</code> para indicar cuándo se eliminó lógicamente el registro.</p>
+          <div class="callout warn"><strong>No es un DELETE físico</strong>El registro sigue existiendo en la base de datos; simplemente queda marcado como eliminado.</div>
+        </div>
+      </section>
+
+      <section class="topic" id="raw" data-keywords="raw query sequelize.query sql directo replacements parametros injection">
+        <button class="topic-header" type="button" aria-expanded="false">
+          <span class="topic-num">14</span>
+          <span class="topic-title"><h2>Consultas SQL directas</h2><p>Usar SQL cuando sea más conveniente.</p></span>
+          <span class="search-score" aria-hidden="true"></span><span class="chev">⌄</span>
+        </button>
+        <div class="topic-body">
+          <div class="code-card"><div class="code-label">Sequelize + SQL</div><pre>const resultados = await sequelize.query(
+  'SELECT * FROM productos WHERE precio &gt; :precio',
+  {
+    replacements: {
+      precio: 100
+    }
+  }
+);</pre></div>
+
+          <div class="callout success"><strong>Cuándo puede ayudar</strong>Reportes, consultas complejas, funciones específicas del motor o situaciones donde SQL sea más claro que la abstracción del ORM.</div>
+          <div class="callout warn"><strong>Seguridad</strong>Prefiere parámetros como <code class="inline">:precio</code> y evita concatenar directamente valores proporcionados por el usuario.</div>
+        </div>
+      </section>
+
+      <section class="topic" id="ejemplo-integrador" data-keywords="todo conjunto ejemplo completo flujo conexion modelo relacion create where include usuario pedido aplicacion">
+        <button class="topic-header" type="button" aria-expanded="false">
+          <span class="topic-num">15</span>
+          <span class="topic-title"><h2>Todo en conjunto: ejemplo corto</h2><p>Cómo se conectan las piezas en un caso sencillo.</p></span>
+          <span class="search-score" aria-hidden="true"></span><span class="chev">⌄</span>
+        </button>
+
+        <div class="topic-body">
+          <p>
+            Supongamos que queremos una aplicación muy sencilla donde un
+            <strong>usuario puede tener varios pedidos</strong>.
+          </p>
+
+          <div class="callout success">
+            <strong>Objetivo del ejemplo</strong>
+            Crear un usuario, registrar un pedido y después consultar al usuario junto con sus pedidos.
+          </div>
+
+          <div class="remember">
+            <strong>Flujo general</strong>
+            <div class="pill-row">
+              <span class="pill">1. Conexión</span>
+              <span class="pill">2. Modelos</span>
+              <span class="pill">3. Relación</span>
+              <span class="pill">4. INSERT</span>
+              <span class="pill">5. SELECT + WHERE</span>
+              <span class="pill">6. JOIN con include</span>
+            </div>
+          </div>
+
+          <h3>1. Conectarnos a la base de datos</h3>
+
+          <div class="code-card">
+            <div class="code-label">database.js</div>
+            <pre>const { Sequelize, DataTypes } = require('sequelize');
+
+const sequelize = new Sequelize(
+  'tienda',
+  'root',
+  'contraseña',
+  {
+    host: 'localhost',
+    dialect: 'mysql'
+  }
+);</pre>
+          </div>
+
+          <h3>2. Definir los modelos</h3>
+
+          <div class="code-card">
+            <div class="code-label">Usuario y Pedido</div>
+            <pre>const Usuario = sequelize.define('Usuario', {
+  nombre: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  }
+});
+
+const Pedido = sequelize.define('Pedido', {
+  total: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  }
+});</pre>
+          </div>
+
+          <h3>3. Crear la relación</h3>
+
+          <div class="pair">
+            <div class="code-card">
+              <div class="code-label">SQL mental</div>
+              <pre>Usuario 1 ───── N Pedido
+
+pedidos
+----------------
+id
+total
+UsuarioId  ← FK</pre>
+            </div>
+
+            <div class="code-card">
+              <div class="code-label">Sequelize</div>
+              <pre>Usuario.hasMany(Pedido);
+Pedido.belongsTo(Usuario);</pre>
+            </div>
+          </div>
+
+          <h3>4. Crear datos</h3>
+
+          <div class="code-card">
+            <div class="code-label">INSERT con Sequelize</div>
+            <pre>const usuario = await Usuario.create({
+  nombre: 'Ana'
+});
+
+await Pedido.create({
+  total: 250.50,
+  UsuarioId: usuario.id
+});</pre>
+          </div>
+
+          <div class="pair">
+            <div class="code-card">
+              <div class="code-label">Equivale conceptualmente a</div>
+              <pre>INSERT INTO usuarios(nombre, activo)
+VALUES ('Ana', true);
+
+INSERT INTO pedidos(total, UsuarioId)
+VALUES (250.50, 1);</pre>
+            </div>
+
+            <div class="callout success">
+              <strong>¿Qué ocurrió?</strong>
+              Primero creamos al usuario. Después usamos su
+              <code class="inline">id</code> como Foreign Key del pedido.
+            </div>
+          </div>
+
+          <h3>5. Consultar al usuario y sus pedidos</h3>
+
+          <div class="code-card">
+            <div class="code-label">WHERE + include</div>
+            <pre>const resultado = await Usuario.findOne({
+  where: {
+    nombre: 'Ana',
+    activo: true
+  },
+  include: Pedido
+});
+
+console.log(resultado);</pre>
+          </div>
+
+          <p>En SQL podemos imaginar algo similar a:</p>
+
+          <div class="code-card">
+            <div class="code-label">SQL conceptual</div>
+            <pre>SELECT *
+FROM usuarios
+LEFT JOIN pedidos
+  ON usuarios.id = pedidos.UsuarioId
+WHERE usuarios.nombre = 'Ana'
+  AND usuarios.activo = true;</pre>
+          </div>
+
+          <h3>¿Qué conceptos usamos?</h3>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Necesidad</th>
+                  <th>Sequelize utilizado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Representar tablas</td>
+                  <td><code class="inline">sequelize.define()</code></td>
+                </tr>
+                <tr>
+                  <td>Definir 1:N</td>
+                  <td><code class="inline">hasMany()</code> + <code class="inline">belongsTo()</code></td>
+                </tr>
+                <tr>
+                  <td>Insertar</td>
+                  <td><code class="inline">create()</code></td>
+                </tr>
+                <tr>
+                  <td>Filtrar</td>
+                  <td><code class="inline">where</code></td>
+                </tr>
+                <tr>
+                  <td>Traer la relación</td>
+                  <td><code class="inline">include</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout warn">
+            <strong>¿Y las migraciones?</strong>
+            Las migraciones normalmente se ejecutan antes para crear o modificar físicamente
+            las tablas. El código anterior representa la parte que la aplicación utiliza
+            después para trabajar con esos datos.
+          </div>
+
+          <div class="remember">
+            <strong>La idea que debes llevarte</strong>
+            Primero existe una estructura en la base de datos. Sequelize la representa con
+            modelos; las relaciones conectan esos modelos y después métodos como
+            <code class="inline">create()</code>, <code class="inline">findOne()</code>,
+            <code class="inline">where</code> e <code class="inline">include</code>
+            permiten trabajar con la información.
+          </div>
+        </div>
+      </section>
+
+      <section class="topic open" id="referencia" data-keywords="referencia cheat sheet resumen findall findone findbypk create update destroy count max min sum attributes order limit offset include query">
+        <button class="topic-header" type="button" aria-expanded="true">
+          <span class="topic-num">16</span>
+          <span class="topic-title"><h2>Referencia rápida</h2><p>La sección para volver cuando solo necesitas recordar un método.</p></span>
+          <span class="search-score" aria-hidden="true"></span><span class="chev">⌄</span>
+        </button>
+        <div class="topic-body">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Necesito...</th><th>Sequelize</th></tr></thead>
+              <tbody>
+                <tr><td>Obtener todos</td><td><code class="inline">findAll()</code></td></tr>
+                <tr><td>Obtener uno</td><td><code class="inline">findOne()</code></td></tr>
+                <tr><td>Buscar por ID</td><td><code class="inline">findByPk()</code></td></tr>
+                <tr><td>Insertar</td><td><code class="inline">create()</code></td></tr>
+                <tr><td>Actualizar</td><td><code class="inline">update()</code></td></tr>
+                <tr><td>Eliminar</td><td><code class="inline">destroy()</code></td></tr>
+                <tr><td>Contar</td><td><code class="inline">count()</code></td></tr>
+                <tr><td>Máximo</td><td><code class="inline">max()</code></td></tr>
+                <tr><td>Mínimo</td><td><code class="inline">min()</code></td></tr>
+                <tr><td>Sumar</td><td><code class="inline">sum()</code></td></tr>
+                <tr><td>Filtrar</td><td><code class="inline">where</code></td></tr>
+                <tr><td>Seleccionar columnas</td><td><code class="inline">attributes</code></td></tr>
+                <tr><td>Ordenar</td><td><code class="inline">order</code></td></tr>
+                <tr><td>Limitar</td><td><code class="inline">limit</code></td></tr>
+                <tr><td>Saltar registros</td><td><code class="inline">offset</code></td></tr>
+                <tr><td>Relaciones / JOIN</td><td><code class="inline">include</code></td></tr>
+                <tr><td>Transacción</td><td><code class="inline">sequelize.transaction()</code></td></tr>
+                <tr><td>SQL directo</td><td><code class="inline">sequelize.query()</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="remember">
+            <strong>Mapa mental final</strong>
+            Tabla → Modelo · Columna → Atributo · Registro → Instancia · SELECT → findAll/findOne · INSERT → create · UPDATE → update · DELETE → destroy · WHERE → where · JOIN → include
+          </div>
+        </div>
+      </section>
+
+      <a class="back-top" href="#top">↑ Volver al inicio</a>
+    </div>
+
+    <footer>
+      Guía didáctica de consulta rápida · SQL ↔ Sequelize
+    </footer>
+  </main>
+</div>
+
+<script>
+(() => {
+  const topics = [...document.querySelectorAll('.topic')];
+  const headers = [...document.querySelectorAll('.topic-header')];
+  const links = [...document.querySelectorAll('nav a')];
+  const search = document.getElementById('search');
+  const results = document.getElementById('results');
+
+  function setOpen(topic, open) {
+    topic.classList.toggle('open', open);
+    const button = topic.querySelector('.topic-header');
+    if (button) button.setAttribute('aria-expanded', String(open));
+  }
+
+  headers.forEach(button => {
+    button.addEventListener('click', () => {
+      const topic = button.closest('.topic');
+      setOpen(topic, !topic.classList.contains('open'));
+    });
+  });
+
+  document.getElementById('expandAll').addEventListener('click', () => {
+    topics.filter(t => !t.classList.contains('hidden-by-search')).forEach(t => setOpen(t, true));
+  });
+
+  document.getElementById('collapseAll').addEventListener('click', () => {
+    topics.forEach(t => setOpen(t, false));
+  });
+
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+  const noResults = document.getElementById('noResults');
+  const content = document.querySelector('.content');
+  const originalOrder = new Map(topics.map((topic, index) => [topic, index]));
+
+  function normalizeText(value) {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9_]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // Palabras que un estudiante podría usar y sus equivalencias SQL / Sequelize.
+  const synonymGroups = [
+    ['select', 'consultar', 'consulta', 'obtener', 'buscar', 'listar', 'findall', 'findone', 'findbypk'],
+    ['insert', 'insertar', 'crear', 'agregar', 'nuevo', 'create'],
+    ['update', 'actualizar', 'editar', 'modificar'],
+    ['delete', 'eliminar', 'borrar', 'quitar', 'destroy'],
+    ['where', 'filtro', 'filtrar', 'condicion', 'condiciones'],
+    ['join', 'unir', 'relacionar', 'include', 'asociar', 'tabla', 'tablas'],
+    ['order', 'ordenar', 'orden', 'asc', 'desc'],
+    ['limit', 'limitar', 'limite'],
+    ['offset', 'pagina', 'paginar', 'paginacion'],
+    ['relation', 'relacion', 'relaciones', 'hasone', 'hasmany', 'belongsto', 'belongstomany'],
+    ['transaction', 'transaccion', 'commit', 'rollback'],
+    ['migration', 'migracion', 'migraciones', 'up', 'down'],
+    ['seed', 'seeder', 'seeders', 'semilla', 'datos iniciales'],
+    ['soft delete', 'softdelete', 'paranoid', 'deletedat', 'eliminacion logica'],
+    ['raw', 'sql directo', 'query', 'sequelize query'],
+    ['count', 'contar', 'cantidad'],
+    ['sum', 'sumar', 'suma', 'total'],
+    ['max', 'maximo', 'mayor'],
+    ['min', 'minimo', 'menor'],
+    ['like', 'contiene', 'texto', 'patron'],
+    ['between', 'entre', 'rango'],
+    ['in', 'lista'],
+    ['primary key', 'primarykey', 'pk', 'clave primaria'],
+    ['foreign key', 'foreignkey', 'fk', 'clave foranea'],
+    ['validation', 'validacion', 'validar', 'error', 'errores'],
+    ['ejemplo completo', 'todo junto', 'todo en conjunto', 'flujo completo', 'integrador']
+  ].map(group => group.map(normalizeText));
+
+  const synonymIndex = new Map();
+  synonymGroups.forEach(group => {
+    group.forEach(term => synonymIndex.set(term, group));
+  });
+
+  function expandTerm(term) {
+    return synonymIndex.get(term) || [term];
+  }
+
+  const stopWords = new Set([
+    'a', 'al', 'como', 'con', 'cual', 'de', 'del', 'el', 'en', 'es', 'hacer',
+    'la', 'las', 'lo', 'los', 'me', 'necesito', 'para', 'por', 'que', 'quiero',
+    'se', 'un', 'una', 'unos', 'unas', 'usar'
+  ]);
+
+  function queryGroups(query) {
+    const normalized = normalizeText(query);
+    if (!normalized) return [];
+
+    // Ignora palabras de relleno para permitir búsquedas del tipo:
+    // "cómo hago un join" o "quiero borrar un usuario".
+    const words = normalized
+      .split(' ')
+      .filter(Boolean)
+      .filter(word => !stopWords.has(word));
+
+    const groups = words.map(expandTerm);
+
+    // Conserva expresiones completas como "soft delete" o "sql directo".
+    synonymGroups.forEach(group => {
+      const phrases = group.filter(item => item.includes(' '));
+      if (phrases.some(phrase => normalized.includes(phrase))) {
+        groups.push(group);
+      }
+    });
+
+    return groups;
+  }
+
+  function editDistanceOneOrLess(a, b) {
+    if (a === b) return true;
+    if (Math.abs(a.length - b.length) > 1) return false;
+
+    let i = 0, j = 0, edits = 0;
+
+    while (i < a.length && j < b.length) {
+      if (a[i] === b[j]) {
+        i++;
+        j++;
+        continue;
+      }
+
+      edits++;
+      if (edits > 1) return false;
+
+      if (a.length > b.length) i++;
+      else if (b.length > a.length) j++;
+      else {
+        i++;
+        j++;
+      }
+    }
+
+    if (i < a.length || j < b.length) edits++;
+    return edits <= 1;
+  }
+
+  function smartIncludes(haystack, needle) {
+    if (!needle) return false;
+    if (haystack.includes(needle)) return true;
+
+    // Prefijos útiles: "transacc" puede encontrar "transaccion".
+    if (needle.length >= 4) {
+      const words = haystack.split(' ');
+      if (words.some(word => word.startsWith(needle) || needle.startsWith(word) && word.length >= 4)) {
+        return true;
+      }
+
+      // Tolera un pequeño error tipográfico en palabras de 5+ caracteres.
+      if (!needle.includes(' ') && needle.length >= 5) {
+        return words.some(word =>
+          word.length >= 5 &&
+          Math.abs(word.length - needle.length) <= 1 &&
+          editDistanceOneOrLess(word, needle)
+        );
+      }
+    }
+
+    return false;
+  }
+
+  function topicSearchData(topic) {
+    const title = normalizeText(topic.querySelector('h2')?.textContent);
+    const keywords = normalizeText(topic.dataset.keywords);
+    const body = normalizeText(topic.textContent);
+    return { title, keywords, body };
+  }
+
+  function scoreTopic(topic, rawQuery) {
+    const normalizedQuery = normalizeText(rawQuery);
+    const groups = queryGroups(rawQuery);
+    const data = topicSearchData(topic);
+
+    if (!groups.length) return { match: true, score: 0 };
+
+    let score = 0;
+
+    // Todas las ideas escritas deben aparecer, aunque sea por un sinónimo.
+    const allGroupsMatch = groups.every(group => {
+      const variants = [...new Set(group)].filter(Boolean);
+      const titleMatch = variants.some(v => smartIncludes(data.title, v));
+      const keywordMatch = variants.some(v => smartIncludes(data.keywords, v));
+      const bodyMatch = variants.some(v => smartIncludes(data.body, v));
+
+      if (titleMatch) score += 8;
+      else if (keywordMatch) score += 5;
+      else if (bodyMatch) score += 2;
+
+      return titleMatch || keywordMatch || bodyMatch;
+    });
+
+    if (!allGroupsMatch) return { match: false, score: 0 };
+
+    // Premia coincidencias exactas o casi exactas.
+    if (data.title.includes(normalizedQuery)) score += 10;
+    if (data.keywords.includes(normalizedQuery)) score += 6;
+    if (data.body.includes(normalizedQuery)) score += 3;
+
+    return { match: true, score };
+  }
+
+  function restoreOrder() {
+    [...topics]
+      .sort((a, b) => originalOrder.get(a) - originalOrder.get(b))
+      .forEach(topic => content.insertBefore(topic, document.querySelector('.back-top')));
+  }
+
+  function runSearch() {
+    const rawQuery = search.value.trim();
+    const isSearching = Boolean(rawQuery);
+    document.body.classList.toggle('searching', isSearching);
+
+    if (!isSearching) {
+      topics.forEach(topic => {
+        topic.classList.remove('hidden-by-search');
+        const scoreBadge = topic.querySelector('.search-score');
+        if (scoreBadge) scoreBadge.textContent = '';
+      });
+      restoreOrder();
+      results.style.display = 'none';
+      results.textContent = '';
+      noResults.hidden = true;
+      return;
+    }
+
+    const ranked = topics.map(topic => {
+      const result = scoreTopic(topic, rawQuery);
+      return { topic, ...result };
+    });
+
+    ranked.forEach(({ topic, match, score }) => {
+      topic.classList.toggle('hidden-by-search', !match);
+      const scoreBadge = topic.querySelector('.search-score');
+      if (scoreBadge) scoreBadge.textContent = match ? `relevancia ${score}` : '';
+      if (match) setOpen(topic, true);
+    });
+
+    const matches = ranked
+      .filter(item => item.match)
+      .sort((a, b) => b.score - a.score || originalOrder.get(a.topic) - originalOrder.get(b.topic));
+
+    matches.forEach(({ topic }) => {
+      content.insertBefore(topic, document.querySelector('.back-top'));
+    });
+
+    results.style.display = 'block';
+    results.textContent = matches.length
+      ? `${matches.length} sección${matches.length === 1 ? '' : 'es'} encontrada${matches.length === 1 ? '' : 's'} para “${rawQuery}”, ordenadas por relevancia.`
+      : `Sin resultados para “${rawQuery}”.`;
+
+    noResults.hidden = matches.length !== 0;
+  }
+
+  search.addEventListener('input', runSearch);
+
+  // Atajo cómodo: "/" enfoca el buscador. Escape limpia la búsqueda.
+  document.addEventListener('keydown', event => {
+    const editable = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '');
+
+    if (event.key === '/' && !editable) {
+      event.preventDefault();
+      search.focus();
+    }
+
+    if (event.key === 'Escape' && document.activeElement === search) {
+      search.value = '';
+      runSearch();
+      search.blur();
+    }
+  });
+
+  links.forEach(link => {
+    link.addEventListener('click', () => {
+      const id = link.getAttribute('href');
+      const topic = document.querySelector(id);
+      if (topic) setOpen(topic, true);
+    });
+  });
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => {
+      const visible = entries
+        .filter(e => e.isIntersecting)
+        .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+
+      if (!visible) return;
+
+      links.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === `#${visible.target.id}`);
+      });
+    }, { rootMargin: '-10% 0px -75% 0px', threshold: 0 });
+
+    topics.forEach(topic => observer.observe(topic));
+  }
+})();
+</script>
+</body>
+</html>
